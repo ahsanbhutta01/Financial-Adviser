@@ -20,7 +20,7 @@ const work = [
    {
       title: "Get Investment profit from AI",
       description:
-         "Our Fin Prompt Ai provides highly personalized and accurate financial prompts looking at your investments and vision.",
+         "Our Financial Advisor Ai provides highly personalized and accurate financial prompts looking at your investments and vision.",
       icon: download,
    },
 ];

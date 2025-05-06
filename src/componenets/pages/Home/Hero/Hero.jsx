@@ -2,6 +2,7 @@ import React from 'react'
 import first from '../../../../assets/first.png'
 import star_icon_1 from '../../../../assets/star_icon 1.png'
 import star_group_1 from '../../../../assets/star_group 1.png'
+import { Link } from 'react-router-dom'
 
 const Hero = () => {
    return (
@@ -24,16 +25,18 @@ const Hero = () => {
                </p>
                <div className="flex mt-7 font-[Michorma] font-light text-4xl md:text-8xl">
                   <h1 className='text-[#FFFFFF]'>FIN</h1>&nbsp;
-                  <h1 className='text-[#5BB0FF]'>PROMPT AI</h1>
+                  <h1 className='text-[#5BB0FF]'>ADVISOR AI</h1>
                </div>
                <div className="flex flex-col text-[#FFFFFF] font-[Lato] font-extralight text-xs mt-2 md:text-xl">
                   <p>Invest in Crypto Currency - Get your Financial prompts</p>
-                  <p className='mx-auto'>from Fin Prompt AI.</p>
+                  <p className='mx-auto'>from Financial Advisor AI.</p>
                </div>
-               <button className='flex items-center justify-center mt-4 md:mt-6 text-white gap-2 bg-[#2B2B2B] rounded-2xl px-6 py-1.5 text-sm md:text-xl text-center cursor-pointer font-[Lato]'>
-                  Generate Prompts
-                  <img src={star_group_1} alt="" className='size-5 md:size-7' />
-               </button>
+               <Link to="/trading">
+                  <button className='flex items-center justify-center mt-4 md:mt-6 text-white gap-2 bg-[#2B2B2B] rounded-2xl px-6 py-1.5 text-sm md:text-xl text-center cursor-pointer font-[Lato]'>
+                     Generate Prompts
+                     <img src={star_group_1} alt="" className='size-5 md:size-7' />
+                  </button>
+               </Link>
                <div className='text-[#FFFFFF] grid md:grid-cols-3 grid-cols-2 gap-3 md:gap-20 text-center mt-10 md:mt-16 font-[Lato] md:text-xl min-w-[120px]'>
                   <p className='bg-transparent border rounded-2xl md:w-auto w-[150px]'>Trading Ideas</p>
                   <p className='bg-transparent border rounded-2xl md:px-7 px-4'>Investment Insights</p>

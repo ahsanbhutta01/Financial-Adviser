@@ -9,7 +9,7 @@ const Navbar = () => {
       <nav className='container flex items-center justify-between px-4x py-4  mx-auto'>
          <div className='font-michroma text-md md:text-2xl flex items-center'>
             <h2 className='text-[#5BB0FF]'>Fin</h2>
-            <h2 className='text-[#1B1B1B]'>Prompt</h2>
+            <h2 className='text-[#1B1B1B]'>Advisor</h2>
          </div>
          <div className="font-lato hidden md:inline space-x-6 text-xl">
             <a href="#">Home</a>

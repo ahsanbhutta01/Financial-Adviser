@@ -9,7 +9,7 @@ const Footer = () => {
 
             <div className='font-[Michroma] text-md md:text-2xl flex items-center'>
                <h2 className='text-[#5BB0FF]'>Fin</h2>
-               <h2 className='text-[#FFFFFF]'>Prompt</h2>
+               <h2 className='text-[#FFFFFF]'>Advisor</h2>
             </div>
 
             {/* For md and upward screens */}
@@ -75,7 +75,7 @@ const Footer = () => {
             </div>
 
             <p className='text-white text-xs md:text-lg'>
-               &copy;<span className='text-[#5BB0FF] font-[Michorma]'>Fin</span><span className='text-[#FFFFFF] font-[Michorma]'>Prompt</span> | Alright Reserved
+               &copy;<span className='text-[#5BB0FF] font-[Michorma]'>Fin</span><span className='text-[#FFFFFF] font-[Michorma]'>Advisor</span> | Alright Reserved
 
             </p>
 
