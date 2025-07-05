@@ -1,0 +1,19 @@
+
+
+@import "tailwindcss";
+
+
+@theme{
+   --color-primary: #5BB0FF;
+   --font-lobster: 'Lobster',  sans-serif;
+   --font-lato: 'Lato',  sans-serif;
+   --font-michroma: 'Michroma',  sans-serif;
+}
+
+html{
+   @apply scroll-smooth
+}
+
+::-webkit-scrollbar{
+   display: none;
+}
