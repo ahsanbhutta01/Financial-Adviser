@@ -3,6 +3,8 @@ import User from "../models/user.model.js"
 import axios from "axios"
 import slugify from "@sindresorhus/slugify"
 import { validateAndTransformResponse } from "../utils/validateAndTransformResponse.js"
+import dotenv from 'dotenv'
+dotenv.config()
 
 function cleanTitle(rawTitle) {
   const cleanedTitle = slugify(rawTitle, {

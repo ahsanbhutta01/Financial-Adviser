@@ -42,9 +42,6 @@ const Prompt = ({ selectedChatDataById }) => {
          // Clear previous response first to show the spinner
          dispatch(setPromptResponse(null))
 
-         // This line was incorrect - selectedChatDataById is not a function
-         // selectedChatDataById(null)
-
          dispatch(togglePrompt(true))
 
          const response = await giveAdvice({
@@ -52,7 +49,7 @@ const Prompt = ({ selectedChatDataById }) => {
             risk: riskNumber,
             tradeType: input.tradeType,
          }).unwrap()
-
+         console.log(response)
          // Store the new response in Redux
          dispatch(setPromptResponse(response))
       } catch (error) {
