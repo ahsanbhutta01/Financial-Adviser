@@ -33,13 +33,14 @@ const App = () => {
       <Routes>
         <Route path='/' element={<Layout />}>
           <Route index element={<Home />} />
-          <Route path='/aiprompt' element=<AiPrompt/> />
+          <Route element=<ProtectedRoute/>>
+            <Route path='/aiprompt' element=<AiPrompt/> />
+          </Route>
         </Route>
 
         {/* Protected Route */}
         <Route element=<ProtectedRoute />>
           <Route path='/trading' element=<Trading /> />
-          
         </Route>
       </Routes>
 
