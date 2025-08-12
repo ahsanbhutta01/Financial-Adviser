@@ -47,9 +47,10 @@ async function giveAdvice(req, res) {
 
     // 2. Enhanced market analysis prompt
     const summaryResp = await axios.post(
+      //deepseek/deepseek-chat-v3-0324:free
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "deepseek/deepseek-chat:free",
+        model: "mistralai/mistral-small-3.2-24b-instruct:free",
         messages: [
           {
             role: "system",
@@ -82,6 +83,7 @@ async function giveAdvice(req, res) {
           },
         ],
         max_tokens: 1500,
+        temperature:0.3
       },
       {
         headers: {
@@ -238,10 +240,10 @@ CRITICAL INSTRUCTION: You MUST respond ONLY with a valid JSON object. Do NOT inc
     const promptResp = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "deepseek/deepseek-chat:free",
+        model: "deepseek/deepseek-chat-v3-0324:free",
         messages: instruction,
         max_tokens: 2000, // Increased token limit for more comprehensive advice
-        temperature: 0.7, // Slightly increased creativity while maintaining accuracy
+        temperature: 0.5, // Slightly increased creativity while maintaining accuracy
       },
       {
         headers: {
@@ -297,7 +299,7 @@ CRITICAL INSTRUCTION: You MUST respond ONLY with a valid JSON object. Do NOT inc
     const titleResp = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "deepseek/deepseek-chat:free",
+        model: "mistralai/mistral-small-3.2-24b-instruct:free",
         messages: [
           {
             role: "system",

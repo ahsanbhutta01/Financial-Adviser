@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import passport from 'passport';
 import session from 'express-session'
+import compression from 'compression';
 
 import connectDB from './config/db.js';
 import userRoute from './routes/user.routes.js';
@@ -35,6 +36,7 @@ app.use(session({
 }))
 app.use(passport.initialize())
 app.use(passport.session());
+app.use(compression())
 
 app.use('/api/user', userRoute);
 app.use('/api/trade', promptRoute);
