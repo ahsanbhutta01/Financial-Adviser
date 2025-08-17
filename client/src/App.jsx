@@ -10,6 +10,7 @@ import { useGetCurrentUserQuery } from './redux/api'
 import { setUser } from './redux/authSlice'
 import AiPrompt from './componenets/pages/Trading/aiPrompt/AiPrompt'
 
+
 const App = () => {
   const { showLogin } = useSelector(state => state.auth)
   const navigate = useNavigate()
@@ -18,7 +19,7 @@ const App = () => {
 
   useEffect(() => {
     if (data?.success) {
-      dispatch(setUser({name:data.name, email:data.email}));
+      dispatch(setUser({ name: data.name, email: data.email }));
     }
   }, [data, dispatch]);
   useEffect(() => {
@@ -28,13 +29,15 @@ const App = () => {
   }, [showLogin, navigate])
   return (
     <>
+    
       {showLogin && <Login />}
+      
 
       <Routes>
         <Route path='/' element={<Layout />}>
           <Route index element={<Home />} />
-          <Route element=<ProtectedRoute/>>
-            <Route path='/aiprompt' element=<AiPrompt/> />
+          <Route element=<ProtectedRoute />>
+            <Route path='/aiprompt' element=<AiPrompt /> />
           </Route>
         </Route>
 

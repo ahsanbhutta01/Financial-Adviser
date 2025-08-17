@@ -59,20 +59,23 @@ async function login(req, res) {
    try {
       const { email, password } = req.body;
       if (!email || !password) {
-         return res
+         res
             .status(400)
             .json({ success: false, msg: "Missing required field(s)" });
+         return;
       }
       const normalizedEmail = email.toLowerCase().trim();
       const user = await User.findOne({ email: normalizedEmail });
 
       if (!user) {
-         return res.status(400).json({ success: false, msg: "User does not exist!" });
+         res.status(400).json({ success: false, msg: "User does not exist!" });
+         return;
       }
 
       const isUserMatch = await bcrypt.compare(password, user.password);
       if (!isUserMatch) {
-         return res.status(401).json({ success: false, msg: "Invalid credentials!" })
+         res.status(401).json({ success: false, msg: "Invalid credentials!" });
+         return;
       }
 
       const token = await jwt.sign(
@@ -125,5 +128,5 @@ async function current(req, res) {
    }
 }
 
-export { signUp, login, logout, current};
+export { signUp, login, logout, current };
 

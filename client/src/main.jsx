@@ -8,7 +8,7 @@ import '@fontsource/lobster';
 import { Provider } from 'react-redux'
 import { store } from './redux/store.js';
 import { BrowserRouter } from 'react-router-dom';
-
+import { Toaster } from 'react-hot-toast';
 
 
 
@@ -17,19 +17,23 @@ const container = document.getElementById('root')
 
 if (container) {
   const root = createRoot(container)
-  
+
 
   root.render(
-    
-      <BrowserRouter>
-        <Provider store={store}>
 
-          <App />
+    <BrowserRouter>
+      <Toaster position="top-center" toastOptions={{
+        duration: 2000,
+        style: { fontSize: '18px' }
+      }} />
+      <Provider store={store}>
+
+        <App />
 
 
-        </Provider>
-      </BrowserRouter>
-    
+      </Provider>
+    </BrowserRouter>
+
   )
 
 } else {

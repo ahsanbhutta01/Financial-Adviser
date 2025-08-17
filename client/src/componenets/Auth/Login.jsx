@@ -8,6 +8,7 @@ import { setShowLogin, setUser } from '../../redux/authSlice'
 import cross from '../../assets/cross.png'
 import { useNavigate } from 'react-router-dom'
 import { useLoginMutation, useSignupMutation } from '../../redux/api'
+import toast from 'react-hot-toast';
 
 const Login = () => {
   const [state, setState] = useState("Login");
@@ -36,21 +37,29 @@ const Login = () => {
         const response = await login({ email, password }).unwrap();
         if (response.success) {
           dispatch(setUser(response.name))
+          toast.success(response.msg)
           navigate('/trading')
           dispatch(setShowLogin(false))
+
+        } else if (!response.success) {
+          toast.error(response.msg)
+
         }
       } else {
 
         const response = await signup(formData).unwrap();
         if (response.success) {
           dispatch(setUser(response.name))
+          toast.success(response.msg)
           navigate('/trading')
           dispatch(setShowLogin(false))
+        } else if (!response.success) {
+          toast.error(response.msg)
         }
 
       }
     } catch (error) {
-
+      toast.error(error?.data?.msg || "Something went wrong");
     }
 
   }
@@ -110,7 +119,7 @@ const Login = () => {
         </h1>
         <button
           className='flex items-center mx-auto border rounded-3xl py-1 px-4 md:px-7 md:py-2 md:w-[70%] gap-3 mt-4 cursor-pointer md:text-lg'
-          onClick={()=>window.location.href='http://localhost:8000/api/user/google'}
+          onClick={() => window.location.href = 'http://localhost:8000/api/user/google'}
         >
           <img src={google} alt="" className='size-6' />
           <span>Continue with Google</span>
