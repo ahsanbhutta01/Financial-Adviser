@@ -1,3 +1,5 @@
 server/.env
 client/.env
 docker-compose.yaml
+client/node_modules
+server/node_modules
