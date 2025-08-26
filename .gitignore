@@ -1,1 +1,3 @@
 server/.env
+client/.env
+docker-compose.yaml
