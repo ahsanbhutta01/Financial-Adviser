@@ -1,5 +1,5 @@
-server/.env
-client/.env
+*.env
+*/.env
 docker-compose.yaml
-client/node_modules
-server/node_modules
+*node_modules
+*/node_modules
