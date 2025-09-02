@@ -193,199 +193,38 @@ jobs:
           echo "Found TODO/FIXME comments - consider addressing them"
         fi
 
-  # Job 6: Deploy to Production
-  deploy:
-    name: Deploy Application
-    runs-on: ubuntu-latest
-    needs: [docker-build-push, security-scan, code-quality]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/deploy-finadv')
-    environment: production
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-        
-    - name: Stop existing containers
-      run: |
-        echo "Stopping existing containers..."
-        docker compose -f docker-compose.prod.yml down --remove-orphans || true
-        docker system prune -f || true
-        
-    - name: Create production docker-compose file
-      run: |
-        cat > docker-compose.prod.yml << 'EOF'
-        version: '3.8'
-        
-        services:
-          client:
-            image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
-            container_name: financial-adviser-client-prod
-            ports:
-              - "5173:80"
-            depends_on:
-              - server
-            networks:
-              - app-network
-            restart: unless-stopped
-            environment:
-              - NODE_ENV=production
-        
-          server:
-            image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
-            container_name: financial-adviser-server-prod
-            ports:
-              - "8000:8000"
-            env_file: 
-              - server/.env   
-            depends_on:
-              - mongodb
-            networks:
-              - app-network
-            restart: unless-stopped
-            environment:
-              - NODE_ENV=production
-        
-          mongodb:
-            image: mongo:7-jammy
-            container_name: financial-adviser-mongodb-prod
-            ports:
-              - "27017:27017"
-            volumes:
-              - mongodb_data_prod:/data/db
-            networks:
-              - app-network
-            restart: unless-stopped
-            environment:
-              - MONGO_INITDB_DATABASE=financial_advisor
-        
-        networks:
-          app-network:
-            driver: bridge
-        
-        volumes:
-          mongodb_data_prod:
-            external: false
-        EOF
-        
-    - name: Pull latest images
-      run: |
-        docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
-        docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
-        
-    - name: Deploy application
-      run: |
-        echo "Deploying application with new images..."
-        docker compose -f docker-compose.prod.yml up -d
-        
-    - name: Wait for services to be ready
-      run: |
-        echo "Waiting for services to start..."
-        sleep 30
-        
-    - name: Health check
-      run: |
-        echo "Performing health checks..."
-        
-        # Check if containers are running
-        if ! docker ps | grep -q "financial-adviser-client-prod"; then
-          echo "❌ Client container is not running"
-          docker compose -f docker-compose.prod.yml logs client
-          exit 1
-        fi
-        
-        if ! docker ps | grep -q "financial-adviser-server-prod"; then
-          echo "❌ Server container is not running"
-          docker compose -f docker-compose.prod.yml logs server
-          exit 1
-        fi
-        
-        if ! docker ps | grep -q "financial-adviser-mongodb-prod"; then
-          echo "❌ MongoDB container is not running"
-          docker compose -f docker-compose.prod.yml logs mongodb
-          exit 1
-        fi
-        
-        # Test API endpoint
-        max_attempts=10
-        attempt=0
-        while [ $attempt -lt $max_attempts ]; do
-          if curl -f http://localhost:8000/api/health 2>/dev/null; then
-            echo "✅ API health check passed"
-            break
-          else
-            echo "⏳ API not ready yet, attempt $((attempt + 1))/$max_attempts"
-            sleep 10
-            attempt=$((attempt + 1))
-          fi
-        done
-        
-        if [ $attempt -eq $max_attempts ]; then
-          echo "❌ API health check failed after $max_attempts attempts"
-          docker compose -f docker-compose.prod.yml logs server
-          exit 1
-        fi
-        
-        # Test frontend
-        if curl -f http://localhost:5173 2>/dev/null; then
-          echo "✅ Frontend health check passed"
-        else
-          echo "❌ Frontend health check failed"
-          docker compose -f docker-compose.prod.yml logs client
-          exit 1
-        fi
-        
-        echo "🎉 All health checks passed! Application deployed successfully."
-        
-    - name: Show deployment status
-      run: |
-        echo "📊 Deployment Status:"
-        docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-        echo ""
-        echo "🔗 Application URLs:"
-        echo "   Frontend: http://localhost:5173"
-        echo "   Backend API: http://localhost:8000"
-        echo "   MongoDB: localhost:27017"
 
-  # Job 7: Summary
+  # Job 6: CI Pipeline Summary
   ci-cd-summary:
-    name: CI/CD Summary
+    name: CI Pipeline Summary
     runs-on: ubuntu-latest
-    needs: [client-build, server-build, docker-build-push, security-scan, code-quality, deploy]
+    needs: [client-build, server-build, docker-build-push, security-scan, code-quality]
     if: always()
     
     steps:
-    - name: CI/CD Results Summary
+    - name: CI Pipeline Results Summary
       run: |
-        echo "## CI/CD Pipeline Results Summary" >> $GITHUB_STEP_SUMMARY
+        echo "## 🔄 CI Pipeline Results Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Build & Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "### 🛠️ Build & Test Results" >> $GITHUB_STEP_SUMMARY
         echo "- **Client Build**: ${{ needs.client-build.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Server Build**: ${{ needs.server-build.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Docker Build & Push**: ${{ needs.docker-build-push.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Security Scan**: ${{ needs.security-scan.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Code Quality**: ${{ needs.code-quality.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Deployment Results" >> $GITHUB_STEP_SUMMARY
-        echo "- **Production Deploy**: ${{ needs.deploy.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
         
-        if [[ "${{ needs.client-build.result }}" == "success" && "${{ needs.server-build.result }}" == "success" && "${{ needs.docker-build-push.result }}" == "success" && "${{ needs.deploy.result }}" == "success" ]]; then
-          echo "✅ **Complete CI/CD Success! Application deployed and running.**" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ needs.client-build.result }}" == "success" && "${{ needs.server-build.result }}" == "success" && "${{ needs.docker-build-push.result }}" == "success" ]]; then
+          echo "✅ **CI Pipeline Success! Docker images built and pushed.**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🚀 **Access your application:**" >> $GITHUB_STEP_SUMMARY
-          echo "- Frontend: http://localhost:5173" >> $GITHUB_STEP_SUMMARY
-          echo "- Backend API: http://localhost:8000" >> $GITHUB_STEP_SUMMARY
-        elif [[ "${{ needs.deploy.result }}" == "skipped" ]]; then
-          echo "⏭️ **Build successful, deployment skipped (PR or non-deployment branch)**" >> $GITHUB_STEP_SUMMARY
+          echo "🐳 **Docker Images Available on Docker Hub:**" >> $GITHUB_STEP_SUMMARY
+          echo "- \`hassan915/financial-adviser-client:${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`hassan915/financial-adviser-server:${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 **Next Steps:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Images are ready for manual deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- Use \`docker-compose.prod.yml\` for production deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- Add GitHub Secrets for environment variables" >> $GITHUB_STEP_SUMMARY
         else
-          echo "❌ **Some jobs failed. Please review the errors above.**" >> $GITHUB_STEP_SUMMARY
+          echo "❌ **Some CI jobs failed. Please review the errors above.**" >> $GITHUB_STEP_SUMMARY
         fi
