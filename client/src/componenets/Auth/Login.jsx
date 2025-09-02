@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import user from '../../assets/user.png'
 import email from '../../assets/email.png'
 import lock from '../../assets/lock.png'
@@ -104,7 +104,7 @@ const Login = () => {
         {
           state === 'Login' ?
             <p className='text-center md:text-lg'>
-              Don't have an account?&nbsp;
+              Don&apos;t have an account?&nbsp;
               <span className='text-blue-600 cursor-pointer' onClick={() => setState("Sign up")}>Sign up</span>
             </p>
             :

@@ -1,4 +1,3 @@
-import React from 'react'
 import third from '../../../../assets/third.png'
 
 const PromptDiscription = () => {

@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+import PropTypes from 'prop-types'
 import { HiOutlineChatBubbleLeftRight } from "react-icons/hi2";
 import profile_icon from '../../../../assets/profile_icon 1.png'
 import ChatLabel from '../chatlabel/ChatLabel';
@@ -72,6 +73,14 @@ const SideBar = ({ expand, setExpand, userName, handleLogout, onLabelClick }) =>
          </div>
       </>
    )
+}
+
+SideBar.propTypes = {
+   expand: PropTypes.bool.isRequired,
+   setExpand: PropTypes.func.isRequired,
+   userName: PropTypes.string.isRequired,
+   handleLogout: PropTypes.func.isRequired,
+   onLabelClick: PropTypes.func.isRequired
 }
 
 export default SideBar

@@ -22,7 +22,6 @@ const Trading = () => {
    const {
       data: selectedChatData,
       isLoading: isChatLoading,
-      error,
    } = useGetChatByIdQuery(selectedChatId, {
       skip: !selectedChatId,
    })
@@ -52,7 +51,7 @@ const Trading = () => {
 
    async function handleLogout() {
       try {
-         const res = await logout().unwrap()
+         await logout().unwrap()
          dispatch(logoutUser())
       } catch (error) {
          console.log(error)

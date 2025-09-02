@@ -1,4 +1,3 @@
-import React from 'react'
 import fourth from '../../../../assets/fourth.png'
 import testimonials from '../../../../assets/testimonials.js'
 import star from '../../../../assets/star.png'

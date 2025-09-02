@@ -12,6 +12,16 @@ export default function AiPrompt() {
    const { aiPrompt } = useSelector((state) => state.auth)
    const dispatch = useDispatch()
 
+   useEffect(() => {
+      const handlePopState = () => {
+         dispatch(togglePrompt())
+      }
+      window.addEventListener("popstate", handlePopState)
+      return () => {
+         window.removeEventListener("popstate", handlePopState)
+      }
+   }, [dispatch])
+
    const copyToClipboard = async (text, section) => {
       try {
          await navigator.clipboard.writeText(text)
@@ -21,7 +31,7 @@ export default function AiPrompt() {
             setCopiedSection(null)
             setNotification(null)
          }, 2000)
-      } catch (err) {
+      } catch {
          setNotification("Failed to copy to clipboard")
          setTimeout(() => setNotification(null), 2000)
       }
@@ -69,7 +79,7 @@ export default function AiPrompt() {
             <div className="bg-white rounded-lg shadow-md border p-6">
                <div className="flex items-center gap-2 text-gray-600">
                   <span className="text-xl">📝</span>
-                  <span>No AI prompt generated yet. Click "Get Prompt" to generate your trading analysis.</span>
+                  <span>No AI prompt generated yet. Click &quot;Get Prompt&quot; to generate your trading analysis.</span>
                </div>
             </div>
          </div>
@@ -91,12 +101,6 @@ export default function AiPrompt() {
       )
    }
 
-   useEffect(() => {
-      const handlePopState = (event) => {
-         dispatch(togglePrompt())
-      }
-      window.addEventListener("popstate", handlePopState)
-   }, [dispatch])
    return (
       <div className="max-w-6xl mx-auto space-y-6 p-4 ">
          {/* Notification */}

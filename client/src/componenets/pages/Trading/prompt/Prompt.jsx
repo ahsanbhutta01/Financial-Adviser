@@ -6,7 +6,7 @@ import { useGiveAdviceMutation } from "../../../../redux/api"
 import { useDispatch } from "react-redux"
 import { setPromptResponse, togglePrompt } from "../../../../redux/authSlice"
 
-const Prompt = ({ selectedChatDataById }) => {
+const Prompt = () => {
    const [input, setInput] = useState({
       investment: "",
       risk: "",
