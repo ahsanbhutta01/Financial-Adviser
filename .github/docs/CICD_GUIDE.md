@@ -27,7 +27,7 @@ Complete CI/CD pipeline for the Financial Adviser application with automatic bui
 - **Rollback Ready**: Easy rollback if deployment fails
 
 ### Image Registry
-- **GitHub Container Registry (GHCR)**: Stores Docker images
+- **Docker Hub**: Stores Docker images
 - **Automatic Tagging**: Images tagged with branch name and SHA
 - **Cache Optimization**: BuildKit caching for faster builds
 
@@ -57,21 +57,21 @@ Complete CI/CD pipeline for the Financial Adviser application with automatic bui
 
 ### Environment Variables
 ```yaml
-REGISTRY: ghcr.io
-IMAGE_NAME_CLIENT: ahsanbhutta01/financial-adviser-client
-IMAGE_NAME_SERVER: ahsanbhutta01/financial-adviser-server
+REGISTRY: docker.io
+IMAGE_NAME_CLIENT: hassan915/financial-adviser-client
+IMAGE_NAME_SERVER: hassan915/financial-adviser-server
 ```
 
 ## 📦 Docker Images
 
 ### Client Image
 - **Base**: Multi-stage build (Node.js → nginx)
-- **Registry**: `ghcr.io/ahsanbhutta01/financial-adviser-client`
+- **Registry**: `docker.io/hassan915/financial-adviser-client`
 - **Tags**: `main`, `deploy-finadv`, `sha-<commit>`
 
 ### Server Image
 - **Base**: Node.js Alpine
-- **Registry**: `ghcr.io/ahsanbhutta01/financial-adviser-server`
+- **Registry**: `docker.io/hassan915/financial-adviser-server`
 - **Tags**: `main`, `deploy-finadv`, `sha-<commit>`
 
 ## 🏥 Health Checks
@@ -161,8 +161,8 @@ docker start <previous-container-id>
 
 #### 1. Image Pull Failed
 ```bash
-# Login to GitHub Container Registry
-echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+# Login to Docker Hub
+docker login
 ```
 
 #### 2. Health Check Failed

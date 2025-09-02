@@ -13,8 +13,8 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-REGISTRY="ghcr.io"
-REPO_OWNER="ahsanbhutta01"
+REGISTRY="docker.io"
+REPO_OWNER="hassan915"
 IMAGE_TAG=${1:-"deploy-finadv"}  # Use provided tag or default
 COMPOSE_FILE="docker-compose.prod.yml"
 
@@ -143,7 +143,7 @@ echo -e "${GREEN}✅ Production compose file created${NC}"
 echo -e "${BLUE}📦 Pulling latest images...${NC}"
 docker pull ${REGISTRY}/${REPO_OWNER}/financial-adviser-client:${IMAGE_TAG} || {
     echo -e "${RED}❌ Failed to pull client image${NC}"
-    echo -e "${YELLOW}Make sure you're logged in: docker login ${REGISTRY}${NC}"
+    echo -e "${YELLOW}Make sure you're logged in: docker login${NC}"
     exit 1
 }
 
