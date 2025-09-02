@@ -8,8 +8,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME_CLIENT: ${{ github.repository }}-client
-  IMAGE_NAME_SERVER: ${{ github.repository }}-server
+  IMAGE_NAME_CLIENT: ${{ github.repository_owner }}/financial-adviser-client
+  IMAGE_NAME_SERVER: ${{ github.repository_owner }}/financial-adviser-server
 
 jobs:
   # Job 1: Test and Build Client (React App)

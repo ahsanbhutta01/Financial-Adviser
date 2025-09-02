@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 REGISTRY="ghcr.io"
-REPO_NAME="ahsanbhutta01/financial-adviser"
+REPO_OWNER="ahsanbhutta01"
 IMAGE_TAG=${1:-"deploy-finadv"}  # Use provided tag or default
 COMPOSE_FILE="docker-compose.prod.yml"
 
@@ -64,7 +64,7 @@ version: '3.8'
 
 services:
   client:
-    image: ${REGISTRY}/${REPO_NAME}-client:${IMAGE_TAG}
+    image: ${REGISTRY}/${REPO_OWNER}/financial-adviser-client:${IMAGE_TAG}
     container_name: financial-adviser-client-prod
     ports:
       - "5173:80"
@@ -82,7 +82,7 @@ services:
       retries: 3
 
   server:
-    image: ${REGISTRY}/${REPO_NAME}-server:${IMAGE_TAG}
+    image: ${REGISTRY}/${REPO_OWNER}/financial-adviser-server:${IMAGE_TAG}
     container_name: financial-adviser-server-prod
     ports:
       - "8000:8000"
@@ -133,13 +133,13 @@ echo -e "${GREEN}✅ Production compose file created${NC}"
 
 # Pull latest images
 echo -e "${BLUE}📦 Pulling latest images...${NC}"
-docker pull ${REGISTRY}/${REPO_NAME}-client:${IMAGE_TAG} || {
+docker pull ${REGISTRY}/${REPO_OWNER}/financial-adviser-client:${IMAGE_TAG} || {
     echo -e "${RED}❌ Failed to pull client image${NC}"
     echo -e "${YELLOW}Make sure you're logged in: docker login ${REGISTRY}${NC}"
     exit 1
 }
 
-docker pull ${REGISTRY}/${REPO_NAME}-server:${IMAGE_TAG} || {
+docker pull ${REGISTRY}/${REPO_OWNER}/financial-adviser-server:${IMAGE_TAG} || {
     echo -e "${RED}❌ Failed to pull server image${NC}"
     exit 1
 }
