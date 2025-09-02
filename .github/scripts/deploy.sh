@@ -36,8 +36,16 @@ if ! command_exists docker; then
 fi
 
 if ! command_exists docker-compose; then
-    echo -e "${RED}❌ Docker Compose is not installed${NC}"
-    exit 1
+    if ! docker compose version >/dev/null 2>&1; then
+        echo -e "${RED}❌ Docker Compose is not installed${NC}"
+        exit 1
+    else
+        # Use docker compose (new format)
+        DOCKER_COMPOSE_CMD="docker compose"
+    fi
+else
+    # Use docker-compose (legacy format)
+    DOCKER_COMPOSE_CMD="docker-compose"
 fi
 
 echo -e "${GREEN}✅ Prerequisites check passed${NC}"
@@ -46,7 +54,7 @@ echo ""
 # Stop existing containers
 echo -e "${BLUE}🛑 Stopping existing containers...${NC}"
 if [ -f "$COMPOSE_FILE" ]; then
-    docker-compose -f "$COMPOSE_FILE" down --remove-orphans || true
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" down --remove-orphans || true
 else
     # Fallback: stop containers by name
     docker stop financial-adviser-client-prod financial-adviser-server-prod financial-adviser-mongodb-prod 2>/dev/null || true
@@ -148,7 +156,7 @@ echo -e "${GREEN}✅ Images pulled successfully${NC}"
 
 # Deploy application
 echo -e "${BLUE}🚀 Deploying application...${NC}"
-docker-compose -f "$COMPOSE_FILE" up -d
+$DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up -d
 
 # Wait for services
 echo -e "${BLUE}⏳ Waiting for services to start...${NC}"
@@ -161,19 +169,19 @@ echo -e "${BLUE}🏥 Performing health checks...${NC}"
 echo -e "${BLUE}Checking container status...${NC}"
 if ! docker ps | grep -q "financial-adviser-client-prod"; then
     echo -e "${RED}❌ Client container is not running${NC}"
-    docker-compose -f "$COMPOSE_FILE" logs client
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" logs client
     exit 1
 fi
 
 if ! docker ps | grep -q "financial-adviser-server-prod"; then
     echo -e "${RED}❌ Server container is not running${NC}"
-    docker-compose -f "$COMPOSE_FILE" logs server
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" logs server
     exit 1
 fi
 
 if ! docker ps | grep -q "financial-adviser-mongodb-prod"; then
     echo -e "${RED}❌ MongoDB container is not running${NC}"
-    docker-compose -f "$COMPOSE_FILE" logs mongodb
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" logs mongodb
     exit 1
 fi
 
@@ -196,7 +204,7 @@ done
 
 if [ $attempt -eq $max_attempts ]; then
     echo -e "${RED}❌ API health check failed after $max_attempts attempts${NC}"
-    docker-compose -f "$COMPOSE_FILE" logs server
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" logs server
     exit 1
 fi
 
@@ -206,7 +214,7 @@ if curl -f http://localhost:5173 >/dev/null 2>&1; then
     echo -e "${GREEN}✅ Frontend health check passed${NC}"
 else
     echo -e "${RED}❌ Frontend health check failed${NC}"
-    docker-compose -f "$COMPOSE_FILE" logs client
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" logs client
     exit 1
 fi
 
@@ -224,8 +232,8 @@ echo -e "   API Health: ${GREEN}http://localhost:8000/api/health${NC}"
 echo -e "   MongoDB: ${GREEN}localhost:27017${NC}"
 echo ""
 echo -e "${BLUE}📋 Useful commands:${NC}"
-echo -e "   View logs: ${YELLOW}docker-compose -f $COMPOSE_FILE logs -f${NC}"
-echo -e "   Stop app: ${YELLOW}docker-compose -f $COMPOSE_FILE down${NC}"
-echo -e "   Restart: ${YELLOW}docker-compose -f $COMPOSE_FILE restart${NC}"
+echo -e "   View logs: ${YELLOW}$DOCKER_COMPOSE_CMD -f $COMPOSE_FILE logs -f${NC}"
+echo -e "   Stop app: ${YELLOW}$DOCKER_COMPOSE_CMD -f $COMPOSE_FILE down${NC}"
+echo -e "   Restart: ${YELLOW}$DOCKER_COMPOSE_CMD -f $COMPOSE_FILE restart${NC}"
 echo ""
 echo -e "${GREEN}✨ Financial Adviser is now running in production mode!${NC}"

@@ -110,9 +110,9 @@ Response: {
 ./.github/scripts/deploy.sh [tag]
 
 # Or using Docker Compose directly
-docker-compose -f docker-compose.prod.yml down
-docker-compose -f docker-compose.prod.yml pull
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 ## 📊 Monitoring
@@ -142,7 +142,7 @@ docker-compose -f docker-compose.prod.yml logs -f server
 ### Quick Rollback
 ```bash
 # Stop current deployment
-docker-compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.prod.yml down
 
 # Deploy previous version
 ./.github/scripts/deploy.sh sha-<previous-commit>
@@ -168,7 +168,7 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
 #### 2. Health Check Failed
 ```bash
 # Check container logs
-docker-compose -f docker-compose.prod.yml logs server
+docker compose -f docker-compose.prod.yml logs server
 
 # Check API manually
 curl http://localhost:8000/api/health
@@ -177,7 +177,7 @@ curl http://localhost:8000/api/health
 #### 3. Database Connection Issues
 ```bash
 # Check MongoDB container
-docker-compose -f docker-compose.prod.yml logs mongodb
+docker compose -f docker-compose.prod.yml logs mongodb
 
 # Test database connection
 docker exec -it financial-adviser-mongodb-prod mongosh

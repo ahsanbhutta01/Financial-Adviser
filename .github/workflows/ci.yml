@@ -219,7 +219,7 @@ jobs:
     - name: Stop existing containers
       run: |
         echo "Stopping existing containers..."
-        docker-compose -f docker-compose.prod.yml down --remove-orphans || true
+        docker compose -f docker-compose.prod.yml down --remove-orphans || true
         docker system prune -f || true
         
     - name: Create production docker-compose file
@@ -286,7 +286,7 @@ jobs:
     - name: Deploy application
       run: |
         echo "Deploying application with new images..."
-        docker-compose -f docker-compose.prod.yml up -d
+        docker compose -f docker-compose.prod.yml up -d
         
     - name: Wait for services to be ready
       run: |
@@ -300,19 +300,19 @@ jobs:
         # Check if containers are running
         if ! docker ps | grep -q "financial-adviser-client-prod"; then
           echo "❌ Client container is not running"
-          docker-compose -f docker-compose.prod.yml logs client
+          docker compose -f docker-compose.prod.yml logs client
           exit 1
         fi
         
         if ! docker ps | grep -q "financial-adviser-server-prod"; then
           echo "❌ Server container is not running"
-          docker-compose -f docker-compose.prod.yml logs server
+          docker compose -f docker-compose.prod.yml logs server
           exit 1
         fi
         
         if ! docker ps | grep -q "financial-adviser-mongodb-prod"; then
           echo "❌ MongoDB container is not running"
-          docker-compose -f docker-compose.prod.yml logs mongodb
+          docker compose -f docker-compose.prod.yml logs mongodb
           exit 1
         fi
         
@@ -332,7 +332,7 @@ jobs:
         
         if [ $attempt -eq $max_attempts ]; then
           echo "❌ API health check failed after $max_attempts attempts"
-          docker-compose -f docker-compose.prod.yml logs server
+          docker compose -f docker-compose.prod.yml logs server
           exit 1
         fi
         
@@ -341,7 +341,7 @@ jobs:
           echo "✅ Frontend health check passed"
         else
           echo "❌ Frontend health check failed"
-          docker-compose -f docker-compose.prod.yml logs client
+          docker compose -f docker-compose.prod.yml logs client
           exit 1
         fi
         
