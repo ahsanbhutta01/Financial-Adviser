@@ -41,6 +41,25 @@ app.use(compression())
 app.use('/api/user', userRoute);
 app.use('/api/trade', promptRoute);
 
+// Health check endpoint for CI/CD pipeline
+app.get('/api/health', (req, res) => {
+   res.status(200).json({
+      status: 'OK',
+      message: 'Financial Adviser API is running',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+   });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+   res.status(200).json({
+      message: 'Financial Adviser API',
+      status: 'running',
+      version: '1.0.0'
+   });
+});
+
 
 
 const PORT = process.env.PORT || 4500;
