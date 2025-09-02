@@ -92,8 +92,6 @@ services:
     container_name: financial-adviser-server-prod
     ports:
       - "8000:8000"
-    env_file: 
-      - server/.env   
     depends_on:
       - mongodb
     networks:
@@ -101,6 +99,16 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+      - MONGO_URI=mongodb://mongodb:27017/financial_advisor
+      - PORT=8000
+      - SECRET_KEY=\${SECRET_KEY:-badobadi}
+      - GEMINI_API=\${GEMINI_API}
+      - OPEN_ROUTER_API=\${OPEN_ROUTER_API}
+      - GOOGLE_CLIENT_ID=\${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=\${GOOGLE_CLIENT_SECRET}
+      - CALLBACK_URL=\${CALLBACK_URL:-http://localhost:8000/api/user/google/callback}
+      - FRONTEND_URL=\${FRONTEND_URL:-http://localhost:5173}
+      - SESSION_SECRET=\${SESSION_SECRET:-hellohybyebye}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
       interval: 30s
