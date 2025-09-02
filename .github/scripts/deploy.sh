@@ -68,8 +68,6 @@ docker system prune -f || true
 # Create production docker-compose file
 echo -e "${BLUE}📝 Creating production docker-compose file...${NC}"
 cat > $COMPOSE_FILE << EOF
-version: '3.8'
-
 services:
   client:
     image: ${REGISTRY}/${REPO_OWNER}/financial-adviser-client:${IMAGE_TAG}
