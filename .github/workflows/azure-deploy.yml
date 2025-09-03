@@ -1,0 +1,60 @@
+name: Deploy to Azure App Service
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline - Build & Push to Docker Hub"]
+    types:
+      - completed
+    branches: [deploy-finadv]
+
+env:
+  AZURE_WEBAPP_NAME: financial-adviser-hassan-app
+  AZURE_RESOURCE_GROUP: financial-adviser-app-rg
+
+jobs:
+  deploy:
+    name: Deploy to Azure App Service
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
+        configuration-file: docker-compose.azure.yml
+        
+    - name: Update container images
+      run: |
+        az webapp config container set \
+          --name ${{ env.AZURE_WEBAPP_NAME }} \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+          --multicontainer-config-type compose \
+          --multicontainer-config-file docker-compose.azure.yml
+          
+    - name: Restart Azure Web App
+      run: |
+        az webapp restart \
+          --name ${{ env.AZURE_WEBAPP_NAME }} \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
+          
+    - name: Deployment Summary
+      run: |
+        echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ **Deployment successful!**" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "🌍 **Live URL:** https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "📝 **Deployed Images:**" >> $GITHUB_STEP_SUMMARY
+        echo "- Client: hassan915/financial-adviser-client:deploy-finadv" >> $GITHUB_STEP_SUMMARY
+        echo "- Server: hassan915/financial-adviser-server:deploy-finadv" >> $GITHUB_STEP_SUMMARY

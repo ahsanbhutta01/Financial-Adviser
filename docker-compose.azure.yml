@@ -1,0 +1,49 @@
+services:
+  client:
+    image: hassan915/financial-adviser-client:deploy-finadv
+    container_name: client
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  server:
+    image: hassan915/financial-adviser-server:deploy-finadv
+    container_name: server
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=production
+      - PORT=8000
+      - MONGODB_URI=mongodb://mongodb:27017/financial_advisor
+      - JWT_SECRET=${JWT_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_DATABASE=financial_advisor
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
