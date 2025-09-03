@@ -1,4 +1,3 @@
-import React from 'react'
 import fifth from '../../../../assets/fifth.png'
 import star_group_1 from '../../../../assets/star_group 1.png'
 import { Link } from 'react-router-dom'

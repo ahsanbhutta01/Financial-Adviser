@@ -1,6 +1,6 @@
 
-
 import { useState } from "react"
+import PropTypes from "prop-types"
 import { MdOutlineContentCopy } from "react-icons/md"
 import { useDispatch, useSelector } from "react-redux"
 import { useGetPromptMutation } from "../../../../redux/api"
@@ -235,6 +235,24 @@ const Message = ({ openPromptBox, selectedChatDataById, isChatLoading, isNewChat
       </div>
    )
 }
+
+Message.propTypes = {
+   openPromptBox: PropTypes.bool.isRequired,
+   selectedChatDataById: PropTypes.shape({
+      chatDataById: PropTypes.object
+   }),
+   isChatLoading: PropTypes.bool.isRequired,
+   isNewChat: PropTypes.bool.isRequired
+}
+
+Message.propTypes = {
+   openPromptBox: PropTypes.bool.isRequired,
+   selectedChatDataById: PropTypes.shape({
+      chatDataById: PropTypes.object
+   }),
+   isChatLoading: PropTypes.bool.isRequired,
+   isNewChat: PropTypes.bool.isRequired
+};
 
 export default Message
 

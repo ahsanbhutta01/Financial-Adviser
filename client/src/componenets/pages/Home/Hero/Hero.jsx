@@ -1,4 +1,3 @@
-import React from 'react'
 import first from '../../../../assets/first.png'
 import star_icon_1 from '../../../../assets/star_icon 1.png'
 import star_group_1 from '../../../../assets/star_group 1.png'

@@ -1,4 +1,3 @@
-import React from "react";
 import second from "../../../../assets/second.png";
 import eyeIcon from "../../../../assets/eye.png";
 import magic from "../../../../assets/magic.png";

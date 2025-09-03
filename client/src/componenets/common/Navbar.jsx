@@ -10,7 +10,7 @@ const Navbar = () => {
    const [ logout ] = useLogoutMutation()
    async function handleLogout() {
       try {
-         const res = await logout().unwrap();
+         await logout().unwrap();
          console.log("success")
          dispatch(logoutUser())
       } catch (error) {

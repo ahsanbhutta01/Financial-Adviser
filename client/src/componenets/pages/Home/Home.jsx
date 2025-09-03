@@ -1,4 +1,3 @@
-import React from 'react'
 import Hero from './Hero/Hero'
 import HowWorks from './HowWork/HowWorks'
 import PromptDiscription from './promptDiscription/PromptDiscription'
