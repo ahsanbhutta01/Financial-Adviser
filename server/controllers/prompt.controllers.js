@@ -50,7 +50,7 @@ async function giveAdvice(req, res) {
       //deepseek/deepseek-chat-v3-0324:free
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "mistralai/mistral-small-3.2-24b-instruct:free",
+        model: "deepseek/deepseek-chat-v3.1:free",
         messages: [
           {
             role: "system",
@@ -240,7 +240,7 @@ CRITICAL INSTRUCTION: You MUST respond ONLY with a valid JSON object. Do NOT inc
     const promptResp = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "deepseek/deepseek-chat-v3-0324:free",
+        model: "deepseek/deepseek-chat-v3.1:free",
         messages: instruction,
         max_tokens: 2000, // Increased token limit for more comprehensive advice
         temperature: 0.5, // Slightly increased creativity while maintaining accuracy
@@ -391,100 +391,289 @@ function analyzeMarketData(coinGeckoData) {
 // Helper function to generate futures-specific prompt section
 function generateFuturesPromptSection(investment, risk) {
   return `
-## FUTURES TRADING SPECIFIC REQUIREMENTS
+## 🎯 FUTURES TRADING SPECIFIC REQUIREMENTS
 
-### Trading Parameters
-- **Capital**: $${investment} USD available for futures positions
-- **Maximum Risk**: ${risk}% per trade (maximum acceptable loss per position)
-- **Leverage Range**: 1x to 20x (recommend based on volatility and risk profile)
-- **Position Types**: Both long and short positions acceptable
-- **Time Horizon**: Short to medium-term (hours to weeks)
+### 📊 Trading Parameters & Constraints
+- **Available Capital**: $${investment} USD (allocated for futures positions)
+- **Maximum Risk Per Trade**: ${risk}% (strict loss limit per individual position)
+- **Leverage Range**: 1x to 20x (recommend based on volatility analysis and risk profile)
+- **Position Types**: Both LONG and SHORT positions acceptable
+- **Time Horizon**: Short to Medium-term (1 day - 4 weeks maximum)
+- **Margin Type**: Isolated margin preferred for risk management
+- **Portfolio Heat**: Maximum 3-5 simultaneous positions
 
-### Futures-Specific Analysis Needed
-1. **Leverage Recommendations**
-   - Optimal leverage for each recommended cryptocurrency
-   - Justification based on volatility and market conditions
-   - Risk-adjusted position sizing with leverage
+### ⚡ Advanced Futures Trading Analysis Framework
 
-2. **Entry and Exit Strategy**
-   - Specific entry price ranges with technical justification
-   - Multiple take-profit levels (TP1, TP2, TP3)
-   - Stop-loss placement to limit risk to ${risk}%
-   - Liquidation price calculations for each position
+#### 1. 🔬 LEVERAGE OPTIMIZATION MATRIX
+**For each recommended cryptocurrency, provide:**
+- **Optimal Leverage**: Specific leverage recommendation (e.g., "5x leverage")
+- **Volatility-Adjusted Sizing**: Position size based on historical volatility
+- **Risk-Parity Allocation**: Equal risk contribution across positions
+- **Correlation Considerations**: Avoid over-leveraging correlated assets
+- **Margin Buffer**: Minimum 30% margin buffer above liquidation price
 
-3. **Funding Rate Analysis**
-   - Current funding rates for recommended perpetual futures
-   - Funding rate trends and impact on position holding costs
-   - Optimal position duration considering funding costs
+#### 2. 🎯 PRECISION ENTRY & EXIT STRATEGY
+**Multi-layer approach for each position:**
+- **Entry Zone Analysis**: Primary entry range with 3-5 specific price levels
+- **Scale-in Strategy**: How to build positions (25%, 50%, 75%, 100%)
+- **Multiple Take-Profit Levels**: 
+  - TP1 (25% position): Conservative target for quick profits
+  - TP2 (50% position): Technical target based on key resistance
+  - TP3 (25% position): Extended target for trend continuation
+- **Dynamic Stop-Loss**: Technical stops that adjust with price movement
+- **Liquidation Calculations**: Exact liquidation prices for each leverage level
 
-4. **Risk Management for Leveraged Positions**
-   - Position sizing formulas with leverage considerations
-   - Margin requirements and buffer calculations
-   - Liquidation risk management strategies
-   - Partial profit-taking and stop-loss adjustment techniques
+#### 3. 💰 FUNDING RATE STRATEGY & COST ANALYSIS
+**Comprehensive funding cost management:**
+- **Current Funding Rates**: Real-time rates for recommended contracts
+- **Funding Rate Trends**: 7-day and 30-day average funding rates
+- **Optimal Holding Duration**: Cost-benefit analysis for position duration
+- **Funding Arbitrage Opportunities**: Spot-futures basis trading opportunities
+- **Roll Strategy**: When to close and re-enter positions to minimize funding costs
 
-5. **Market Structure Analysis**
-   - Open interest analysis for recommended futures contracts
-   - Long/short ratio insights where available
-   - Basis analysis (spot vs futures price differences)
-   - Volatility assessment for leverage selection
+#### 4. 🛡️ ADVANCED RISK MANAGEMENT FOR LEVERAGED POSITIONS
+**Multi-layered risk protection:**
+- **Position Sizing Formula**: 
+  - Risk Amount = Account Size × ${risk}%
+  - Position Size = Risk Amount ÷ (Entry Price - Stop Loss) × Leverage
+- **Margin Management**: 
+  - Initial margin requirements
+  - Maintenance margin buffers
+  - Margin call prevention strategies
+- **Portfolio Risk Metrics**:
+  - Maximum portfolio leverage exposure
+  - Correlation-adjusted risk
+  - Value-at-Risk (VaR) calculations at 95% confidence level
+- **Liquidation Risk Management**:
+  - Minimum distance from liquidation price (recommended 40%+)
+  - Partial position closure triggers
+  - Emergency exit procedures
 
-### Expected Deliverables for Futures Trading
-- Specific leverage recommendations (e.g., "5x leverage on BTC")
-- Calculated liquidation prices for each position
-- Funding rate impact analysis
-- Risk-reward ratios for each recommended trade
-- Position management timeline and milestones
+#### 5. 📈 MARKET STRUCTURE ANALYSIS FOR FUTURES
+**Deep market intelligence:**
+- **Open Interest Analysis**: Trend and implications for each contract
+- **Long/Short Ratio**: Market positioning insights where available
+- **Basis Analysis**: Spot vs futures price differences and convergence
+- **Volume Profile**: Intraday volume patterns and optimal execution times
+- **Futures Curve Analysis**: Contango/backwardation implications
+- **Cross-Exchange Arbitrage**: Price differences across major exchanges
+
+### 🎯 FUTURES-SPECIFIC DELIVERABLES REQUIRED
+
+**For each recommended futures position, provide:**
+
+1. **Contract Specification**:
+   - Exact contract name and symbol
+   - Recommended exchange (Binance, Bybit, OKX, etc.)
+   - Contract size and tick size
+
+2. **Position Details**:
+   - Exact USD allocation
+   - Recommended leverage with justification
+   - Position size in base currency
+   - Margin requirement calculation
+
+3. **Technical Setup**:
+   - Entry price range (specific levels)
+   - Stop-loss price (technical and % based)
+   - Take-profit levels (TP1, TP2, TP3 with specific prices)
+   - Liquidation price calculation
+   - Risk-reward ratio for each scenario
+
+4. **Timing Strategy**:
+   - Optimal entry timeframe (specific hours/days)
+   - Expected position duration
+   - Funding rate schedule considerations
+   - Market session preferences (Asian/European/US)
+
+5. **Scenario Analysis**:
+   - **Bull Case**: Expected returns and exit strategy
+   - **Base Case**: Most likely outcome and management
+   - **Bear Case**: Loss limitation and exit triggers
+   - **Black Swan**: Emergency liquidation procedures
+
+6. **Performance Tracking**:
+   - Daily P&L monitoring thresholds
+   - Position adjustment triggers
+   - Partial profit-taking schedule
+   - Roll-over decision criteria
+
+### ⚠️ CRITICAL FUTURES TRADING WARNINGS
+- Account for 0.02-0.04% trading fees on each side
+- Monitor funding rates every 8 hours
+- Never risk more than ${risk}% on any single trade
+- Maintain minimum 30% margin buffer above liquidation
+- Set alerts for 50% of stop-loss level
+- Plan for gap risk and weekend volatility
+- Consider regional regulatory restrictions
 `
 }
 
 // Helper function to generate spot-specific prompt section
 function generateSpotPromptSection(investment, risk) {
   return `
-## SPOT TRADING SPECIFIC REQUIREMENTS
+## 💎 SPOT TRADING SPECIFIC REQUIREMENTS
 
-### Trading Parameters
-- **Capital**: $${investment} USD available for spot purchases
-- **Maximum Risk**: ${risk}% per trade (maximum acceptable loss per position)
-- **Position Types**: Long-only positions (direct ownership)
-- **Time Horizon**: Mix of short, medium, and long-term positions
-- **Rebalancing**: Consider periodic portfolio rebalancing
+### 📊 Investment Parameters & Framework
+- **Available Capital**: $${investment} USD (for direct cryptocurrency ownership)
+- **Maximum Risk Per Position**: ${risk}% (maximum acceptable loss per individual holding)
+- **Investment Approach**: Direct ownership with strategic allocation
+- **Time Horizon**: Flexible (1 week to 6+ months based on opportunity)
+- **Rebalancing Frequency**: Monthly or trigger-based (±15% allocation drift)
+- **Tax Efficiency**: Consider FIFO/LIFO implications and tax-loss harvesting
 
-### Spot-Specific Analysis Needed
-1. **Portfolio Diversification**
-   - Balance between large-cap, mid-cap, and small-cap cryptocurrencies
-   - Sector diversification (DeFi, Layer 1, Layer 2, Gaming, etc.)
-   - Risk distribution across different market cap categories
+### 🏗️ ADVANCED SPOT PORTFOLIO CONSTRUCTION
 
-2. **Dollar-Cost Averaging (DCA) Strategy**
-   - Recommended DCA schedules for each allocation
-   - Entry point optimization for lump-sum vs. DCA approach
-   - Market timing considerations for initial purchases
+#### 1. 📈 STRATEGIC ALLOCATION FRAMEWORK
+**Multi-tier portfolio structure:**
+- **Core Holdings (50-65%)**: Large-cap, established cryptocurrencies
+  - Bitcoin (BTC): Store of value and portfolio anchor
+  - Ethereum (ETH): Smart contract platform leader
+- **Growth Positions (25-35%)**: Mid-cap with strong fundamentals
+  - Layer 1 platforms, DeFi protocols, infrastructure projects
+- **Speculative Positions (5-15%)**: High-risk/high-reward opportunities
+  - Small-cap gems, new protocols, emerging narratives
+- **Sector Diversification**: Balance across DeFi, Layer 1/2, Web3, Gaming, AI, etc.
 
-3. **Fundamental Analysis**
-   - Project fundamentals and long-term viability
-   - Tokenomics analysis (supply, inflation, utility)
-   - Development activity and ecosystem growth
-   - Competitive positioning and market share
+#### 2. 🎯 SOPHISTICATED ENTRY STRATEGIES
+**Multi-method approach for each allocation:**
+- **Lump Sum vs. DCA Analysis**: Optimal entry method based on technical setup
+- **Dollar-Cost Averaging (DCA) Schedules**:
+  - Weekly DCA for core holdings (4-8 week schedules)
+  - Bi-weekly DCA for growth positions (6-12 week schedules)
+  - Event-driven purchases for speculative positions
+- **Technical Entry Zones**:
+  - Primary accumulation zones (strongest support levels)
+  - Secondary entry points (on pullbacks to moving averages)
+  - Value opportunity thresholds (oversold conditions)
 
-4. **Technical Analysis for Spot Entry**
-   - Optimal entry zones based on support levels
-   - Accumulation zones and value opportunities
-   - Trend analysis for medium to long-term holds
-   - Volume profile analysis for entry timing
+#### 3. 🔍 FUNDAMENTAL ANALYSIS DEEP DIVE
+**Comprehensive project evaluation for each recommendation:**
+- **Technology Assessment**:
+  - Innovation and competitive advantages
+  - Development activity and GitHub commits
+  - Technical roadmap and milestone achievements
+- **Tokenomics Analysis**:
+  - Total supply and inflation schedule
+  - Token utility and value accrual mechanisms
+  - Staking rewards and lock-up periods
+- **Ecosystem Health**:
+  - Total Value Locked (TVL) trends
+  - Active addresses and transaction volumes
+  - Developer ecosystem and partnerships
+- **Competitive Positioning**:
+  - Market share analysis
+  - Moat strength and defensibility
+  - Adoption metrics and user growth
 
-5. **Hold vs. Trade Strategy**
-   - Recommendations for long-term holds vs. active trading
-   - Profit-taking strategies for different time horizons
-   - Rebalancing triggers and portfolio maintenance
-   - Tax considerations for spot trading
+#### 4. 📊 TECHNICAL ANALYSIS FOR SPOT ACCUMULATION
+**Long-term technical framework:**
+- **Multi-Timeframe Analysis**: Weekly, daily, and 4-hour chart confluence
+- **Accumulation Zone Identification**:
+  - Volume-weighted average price (VWAP) levels
+  - Fibonacci retracement zones (38.2%, 50%, 61.8%)
+  - Historical support levels and previous consolidation ranges
+- **Trend Analysis**:
+  - Primary trend identification using 200-day moving average
+  - Intermediate trend using 50-day moving average
+  - Short-term momentum using 20-day moving average
+- **Momentum Indicators**:
+  - RSI for oversold/overbought conditions
+  - MACD for trend confirmation
+  - On-balance volume for accumulation/distribution patterns
 
-### Expected Deliverables for Spot Trading
-- Specific allocation percentages with USD amounts
-- DCA schedules and entry strategies
-- Long-term price targets and holding periods
-- Fundamental analysis summary for each recommendation
-- Portfolio rebalancing guidelines and triggers
+#### 5. 💰 PROFIT-TAKING & PORTFOLIO MANAGEMENT STRATEGY
+**Systematic approach to profit realization:**
+- **Partial Profit-Taking Levels**:
+  - First tier (25%): Conservative target at key resistance
+  - Second tier (50%): Technical target based on measured moves
+  - Third tier (25%): Extended target for long-term holds
+- **Rebalancing Methodology**:
+  - Quarterly strategic rebalancing
+  - Tactical rebalancing on ±15% allocation drift
+  - Momentum-based adjustments during strong trends
+- **Tax-Optimized Strategies**:
+  - Long-term capital gains holding (1+ year)
+  - Tax-loss harvesting opportunities
+  - Specific lot identification for sales
+
+### 🎯 SPOT TRADING SPECIFIC DELIVERABLES REQUIRED
+
+**For each recommended spot position, provide:**
+
+1. **Asset Fundamentals**:
+   - Project overview and value proposition
+   - Market cap category and growth potential
+   - Key partnerships and ecosystem developments
+   - Competitive advantages and moat analysis
+
+2. **Allocation Strategy**:
+   - Exact USD allocation and percentage of portfolio
+   - Rationale for position sizing
+   - Market cap category classification
+   - Sector allocation contribution
+
+3. **Entry Strategy**:
+   - Optimal entry price range (specific levels)
+   - DCA schedule recommendation (if applicable)
+   - Technical entry triggers and conditions
+   - Minimum and maximum position sizing
+
+4. **Technical Analysis**:
+   - Current technical setup and trend direction
+   - Key support and resistance levels
+   - Moving average analysis and signals
+   - Volume profile and accumulation zones
+
+5. **Exit Strategy**:
+   - Profit-taking levels (specific prices and percentages)
+   - Stop-loss methodology (technical vs. percentage)
+   - Long-term holding vs. trading approach
+   - Rebalancing triggers and thresholds
+
+6. **Risk Assessment**:
+   - Project-specific risks and mitigation strategies
+   - Regulatory risks and geographic considerations
+   - Technology risks and competitive threats
+   - Liquidity risks and market depth analysis
+
+7. **Performance Monitoring**:
+   - Key performance indicators (KPIs) to track
+   - Fundamental milestone monitoring
+   - Technical level monitoring
+   - Rebalancing triggers and procedures
+
+### 💡 ADVANCED SPOT STRATEGIES
+
+#### 🔄 YIELD OPTIMIZATION
+**Maximize returns on holdings:**
+- **Staking Opportunities**: APY analysis and lock-up considerations
+- **Liquidity Mining**: Risk-adjusted yield farming strategies
+- **Lending Protocols**: Secure lending for additional yield
+- **Governance Participation**: Voting rewards and protocol benefits
+
+#### 🛡️ RISK MITIGATION TECHNIQUES
+**Comprehensive protection strategies:**
+- **Correlation Analysis**: Avoid over-concentration in correlated assets
+- **Geographic Diversification**: Regulatory risk spreading
+- **Exchange Risk Management**: Multi-exchange custody strategies
+- **Insurance Coverage**: Available protection options
+
+#### 📈 PERFORMANCE OPTIMIZATION
+**Continuous improvement framework:**
+- **Monthly Performance Review**: Attribution analysis and lessons learned
+- **Quarterly Strategy Assessment**: Market condition adjustments
+- **Annual Tax Planning**: Optimize for tax efficiency
+- **Market Cycle Adaptation**: Bull/bear market strategy adjustments
+
+### ⚠️ CRITICAL SPOT TRADING CONSIDERATIONS
+- Account for 0.1-0.25% trading fees on purchases
+- Consider withdrawal fees for moving to cold storage
+- Plan for potential exchange downtime or access issues
+- Maintain detailed records for tax reporting
+- Consider dollar-cost averaging to reduce timing risk
+- Plan for long-term custody and security solutions
+- Monitor regulatory developments in your jurisdiction
 `
 }
 
@@ -533,115 +722,211 @@ async function generateCryptoPrompt(req, res) {
         ? generateFuturesPromptSection(investment, risk)
         : generateSpotPromptSection(investment, risk)
 
-    // Create the comprehensive prompt
+    // Create the enhanced comprehensive prompt
     const comprehensivePrompt = `
-# CRYPTOCURRENCY INVESTMENT ANALYSIS REQUEST
+# PROFESSIONAL CRYPTOCURRENCY INVESTMENT ANALYSIS & STRATEGY
 
-## ANALYSIS DATE & TIME
-- Date: ${currentDate}
-- Time: ${currentTime}
-- Market Data Source: CoinGecko API (Live Data)
+## 🎯 MISSION STATEMENT
+You are a seasoned cryptocurrency portfolio manager with 10+ years of experience in digital assets, technical analysis, and risk management. Provide a detailed, actionable investment strategy based on real-time market data and sophisticated analysis techniques.
 
-## INVESTOR PROFILE
-- **Investment Amount**: $${investment} USD
-- **Risk Tolerance**: ${risk}% maximum loss per trade
-- **Trading Type**: ${tradeType.charAt(0).toUpperCase() + tradeType.slice(1).toLowerCase()} Trading
-- **Experience Level**: Assume intermediate knowledge
+## 📊 MARKET CONTEXT & TIMESTAMP
+- **Analysis Date**: ${currentDate}
+- **Analysis Time**: ${currentTime} (Local Time)
+- **Data Source**: CoinGecko API (Real-time Market Data)
+- **Market Session**: ${new Date().getUTCHours() >= 13 && new Date().getUTCHours() <= 21 ? 'US Trading Hours' : 'Asian/European Trading Hours'}
 
-## CURRENT MARKET SNAPSHOT
-### Market Overview
-- **Total Market Cap**: $${(marketAnalysis.totalMarketCap / 1e12).toFixed(2)}T
-- **Market Sentiment**: ${marketAnalysis.marketSentiment}
-- **Average 24h Change**: ${marketAnalysis.averageChange24h.toFixed(2)}%
+## 👤 INVESTOR PROFILE & CONSTRAINTS
+- **Available Capital**: $${investment} USD
+- **Risk Tolerance**: Maximum ${risk}% loss per individual position
+- **Trading Style**: ${tradeType.charAt(0).toUpperCase() + tradeType.slice(1).toLowerCase()} Trading
+- **Experience Level**: Intermediate (understands basic concepts, needs advanced guidance)
+- **Investment Horizon**: ${tradeType.toLowerCase() === 'future' ? 'Short to Medium-term (1 day - 4 weeks)' : 'Medium to Long-term (1 week - 6 months)'}
+- **Portfolio Approach**: Diversified allocation across market cap categories
 
-### Top Performers (24h)
+## 📈 REAL-TIME MARKET INTELLIGENCE
+
+### Global Market Overview
+- **Total Cryptocurrency Market Cap**: $${(marketAnalysis.totalMarketCap / 1e12).toFixed(2)} Trillion
+- **Market Sentiment Index**: ${marketAnalysis.marketSentiment} (${marketAnalysis.averageChange24h > 5 ? 'Extremely Bullish' : marketAnalysis.averageChange24h > 2 ? 'Bullish' : marketAnalysis.averageChange24h > -2 ? 'Neutral' : marketAnalysis.averageChange24h > -5 ? 'Bearish' : 'Extremely Bearish'})
+- **24h Average Price Change**: ${marketAnalysis.averageChange24h.toFixed(2)}%
+- **Market Volatility Level**: ${Math.abs(marketAnalysis.averageChange24h) > 5 ? 'High' : Math.abs(marketAnalysis.averageChange24h) > 2 ? 'Medium' : 'Low'}
+
+### 🚀 TOP MOMENTUM GAINERS (24h Performance)
 ${marketAnalysis.topGainers
   .map(
     (coin, index) =>
-      `${index + 1}. ${coin.name} (${coin.symbol.toUpperCase()}): +${coin.price_change_percentage_24h.toFixed(2)}% | Price: $${coin.current_price} | Volume: $${(coin.total_volume / 1e6).toFixed(1)}M`,
+      `${index + 1}. **${coin.name}** (${coin.symbol.toUpperCase()})
+   📈 +${coin.price_change_percentage_24h.toFixed(2)}% | 💰 $${coin.current_price.toLocaleString()} | 📊 Volume: $${(coin.total_volume / 1e6).toFixed(1)}M
+   🏆 Market Cap: $${(coin.market_cap / 1e9).toFixed(2)}B | 🔄 Market Cap Rank: #${coin.market_cap_rank}`,
   )
-  .join("\n")}
+  .join("\n\n")}
 
-### Top Decliners (24h)
+### 📉 SIGNIFICANT DECLINERS (24h Performance)
 ${marketAnalysis.topLosers
   .map(
     (coin, index) =>
-      `${index + 1}. ${coin.name} (${coin.symbol.toUpperCase()}): ${coin.price_change_percentage_24h.toFixed(2)}% | Price: $${coin.current_price} | Volume: $${(coin.total_volume / 1e6).toFixed(1)}M`,
+      `${index + 1}. **${coin.name}** (${coin.symbol.toUpperCase()})
+   📉 ${coin.price_change_percentage_24h.toFixed(2)}% | 💰 $${coin.current_price.toLocaleString()} | 📊 Volume: $${(coin.total_volume / 1e6).toFixed(1)}M
+   🏆 Market Cap: $${(coin.market_cap / 1e9).toFixed(2)}B | 🔄 Market Cap Rank: #${coin.market_cap_rank}`,
   )
-  .join("\n")}
+  .join("\n\n")}
 
-### High Volume Assets (Liquidity Leaders)
+### 🌊 LIQUIDITY LEADERS (High Volume Assets)
 ${marketAnalysis.highVolumeCoins
   .map(
     (coin, index) =>
-      `${index + 1}. ${coin.name} (${coin.symbol.toUpperCase()}): Volume: $${(coin.total_volume / 1e9).toFixed(2)}B | Price: $${coin.current_price} | 24h: ${coin.price_change_percentage_24h.toFixed(2)}%`,
+      `${index + 1}. **${coin.name}** (${coin.symbol.toUpperCase()})
+   💧 24h Volume: $${(coin.total_volume / 1e9).toFixed(2)}B | 💰 Price: $${coin.current_price.toLocaleString()} 
+   📊 24h Change: ${coin.price_change_percentage_24h.toFixed(2)}% | 🏆 Market Cap: $${(coin.market_cap / 1e9).toFixed(2)}B`,
   )
-  .join("\n")}
+  .join("\n\n")}
 
-## DETAILED MARKET DATA
-${JSON.stringify(coinGeckoData.slice(0, 25), null, 2)}
+## 📋 COMPLETE MARKET DATA SNAPSHOT
+\`\`\`json
+${JSON.stringify(coinGeckoData.slice(0, 30), null, 2)}
+\`\`\`
 
 ${tradeSpecificSection}
 
-## ANALYSIS REQUIREMENTS
+## 🎯 COMPREHENSIVE ANALYSIS FRAMEWORK
 
-### 1. MARKET ANALYSIS
-Provide a comprehensive analysis of:
-- Current market trends and momentum
-- Key support and resistance levels for major cryptocurrencies
-- Volume analysis and liquidity assessment
-- Market sentiment indicators
-- Potential market catalysts or risks
+### 1. 🔍 MULTI-DIMENSIONAL MARKET ANALYSIS
+**Required Deep Dive Analysis:**
+- **Macro Trend Analysis**: Identify primary, secondary, and tertiary trends across different timeframes
+- **Market Structure Analysis**: Support/resistance levels, trend lines, and chart patterns
+- **Volume Profile Assessment**: Volume at price levels, buying/selling pressure zones
+- **Momentum Indicators**: RSI, MACD, Stochastic, Williams %R analysis
+- **Market Sentiment Indicators**: Fear & Greed Index implications, social sentiment
+- **Liquidity Analysis**: Bid-ask spreads, order book depth, slippage considerations
+- **Correlation Analysis**: Inter-asset correlations and portfolio diversification benefits
+- **News & Fundamental Catalyst Assessment**: Recent developments affecting price action
 
-### 2. PORTFOLIO ALLOCATION
-Create a detailed investment strategy that:
-- Allocates the $${investment} across 3-5 cryptocurrencies
-- Provides specific USD amounts and percentages for each allocation
-- Balances risk vs. reward based on ${risk}% risk tolerance
-- Considers current market conditions and technical indicators
+### 2. 💼 STRATEGIC PORTFOLIO CONSTRUCTION
+**Create a sophisticated allocation strategy that includes:**
+- **Core Holdings (60-70%)**: Established, high market cap cryptocurrencies (BTC, ETH)
+- **Growth Positions (20-30%)**: Mid-cap assets with strong fundamentals and growth potential
+- **Speculative Positions (5-15%)**: Small-cap, high-risk/high-reward opportunities
+- **Sector Diversification**: DeFi, Layer 1, Layer 2, Web3, Gaming, AI, etc.
+- **Geographic Considerations**: Regulatory environments and regional adoption
+- **Specific USD Allocation**: Exact dollar amounts for each recommended position
+- **Rebalancing Triggers**: When and how to adjust allocations
 
-### 3. TECHNICAL ANALYSIS
-For each recommended cryptocurrency, provide:
-- Current technical indicators (RSI, MACD, Moving Averages)
-- Key price levels (support, resistance, entry points)
-- Chart pattern analysis if applicable
+### 3. 📊 ADVANCED TECHNICAL ANALYSIS FRAMEWORK
+**For each recommended cryptocurrency, provide:**
+- **Multi-Timeframe Analysis**: 1H, 4H, 1D, 1W chart analysis
+- **Key Technical Levels**: 
+  - Primary Support/Resistance zones
+  - Fibonacci retracement levels
+  - Moving average clusters (20, 50, 100, 200 MA)
+  - Volume-weighted average price (VWAP)
+- **Chart Pattern Recognition**: Triangles, flags, head & shoulders, double tops/bottoms
+- **Momentum Oscillators**: RSI divergences, MACD crossovers, stochastic conditions
+- **Volume Analysis**: On-balance volume, accumulation/distribution patterns
+- **Volatility Indicators**: Bollinger Bands, Average True Range analysis
+
+### 4. ⚠️ SOPHISTICATED RISK MANAGEMENT PROTOCOL
+**Comprehensive risk framework including:**
+- **Position Sizing Mathematics**: Kelly Criterion or fixed fractional method
+- **Stop-Loss Strategy**: 
+  - Technical stop-losses (below key support levels)
+  - Percentage-based stops (aligned with ${risk}% risk tolerance)
+  - Trailing stop methodology
+- **Take-Profit Strategy**: 
+  - Multiple profit-taking levels (25%, 50%, 75% position reduction)
+  - Risk-reward ratios for each trade (minimum 1:2 ratio)
+- **Portfolio Heat Management**: Maximum exposure limits per sector/market cap
+- **Correlation Risk Management**: Avoiding over-concentration in correlated assets
+- **Black Swan Protection**: Hedging strategies and position sizing for tail risk events
+- **Drawdown Management**: Maximum portfolio drawdown limits and recovery strategies
+
+### 5. ⚡ PRECISION EXECUTION STRATEGY
+**Step-by-step implementation plan:**
+- **Market Timing Analysis**: Optimal entry windows based on market microstructure
+- **Order Management**: 
+  - Limit orders vs. market orders strategy
+  - Dollar-cost averaging schedules
+  - Scale-in and scale-out techniques
+- **Exchange Selection**: Liquidity, fees, and security considerations
+- **Tax Optimization**: FIFO/LIFO strategies and tax-loss harvesting opportunities
+- **Monitoring Framework**: 
+  - Daily, weekly, and monthly review schedules
+  - Key performance indicators (KPIs) tracking
+  - Portfolio rebalancing triggers
+
+## 📋 ENHANCED OUTPUT FORMAT REQUIREMENTS
+
+**Structure your comprehensive response as follows:**
+
+### 1. 🎯 EXECUTIVE SUMMARY (3-4 sentences)
+- Market outlook and key opportunities
+- Primary investment thesis
+- Expected risk-adjusted returns
+
+### 2. 🌍 MARKET OUTLOOK & MACRO ANALYSIS
+- Current market cycle phase
+- Key technical and fundamental drivers
+- Short-term (1-4 weeks) and medium-term (1-3 months) forecasts
+- Potential market catalysts and risk events
+
+### 3. 💎 RECOMMENDED PORTFOLIO ALLOCATIONS
+**For each recommended asset, provide:**
+- Asset name and ticker symbol
+- Allocation percentage and exact USD amount
+- Market cap category (Large/Mid/Small cap)
+- Investment thesis and fundamental rationale
+- Technical entry strategy and price levels
+- Expected time horizon for the position
+
+### 4. 📊 DETAILED TECHNICAL ANALYSIS
+**For each recommendation:**
+- Current technical setup and trend direction
+- Key support and resistance levels with specific prices
+- Technical indicators analysis (RSI, MACD, etc.)
+- Chart pattern identification
 - Volume profile assessment
+- Risk-reward ratio calculation
 
-### 4. RISK MANAGEMENT STRATEGY
-Develop a comprehensive risk management plan including:
-- Position sizing methodology
-- Stop-loss placement strategy
-- Take-profit level recommendations
-- Portfolio diversification approach
-- Risk monitoring techniques
+### 5. 🛡️ COMPREHENSIVE RISK MANAGEMENT
+- Position sizing methodology with calculations
+- Stop-loss placement strategy with specific prices
+- Take-profit levels and partial exit strategy
+- Portfolio correlation analysis
+- Maximum drawdown projections
+- Contingency plans for different market scenarios
 
-### 5. EXECUTION PLAN
-Provide a step-by-step execution plan with:
-- Optimal entry timing and conditions
-- Order types and execution strategy
-- Monitoring schedule and key metrics to watch
-- Exit strategy for both profit-taking and loss-cutting
+### 6. ⏰ IMPLEMENTATION TIMELINE
+- **Week 1**: Initial positions and entry strategy
+- **Week 2-4**: Monitoring and potential adjustments
+- **Monthly**: Portfolio rebalancing schedule
+- **Quarterly**: Strategic review and allocation updates
 
-## OUTPUT FORMAT REQUIREMENTS
-Please structure your response as follows:
+### 7. 📈 PERFORMANCE MONITORING CHECKLIST
+- Daily monitoring metrics
+- Weekly portfolio review items
+- Monthly performance evaluation criteria
+- Warning signals and exit triggers
+- Rebalancing thresholds and procedures
 
-1. **EXECUTIVE SUMMARY** (2-3 sentences)
-2. **MARKET OUTLOOK** (Current conditions and short-term forecast)
-3. **RECOMMENDED ALLOCATIONS** (Detailed breakdown with rationale)
-4. **TECHNICAL ANALYSIS** (Key levels and indicators for each recommendation)
-5. **RISK MANAGEMENT** (Specific strategies and guidelines)
-6. **EXECUTION TIMELINE** (When and how to implement)
-7. **MONITORING CHECKLIST** (Key metrics and warning signs)
+## 🎓 ENHANCED GUIDANCE NOTES
 
-## IMPORTANT NOTES
-- Base all recommendations on the provided real-time market data
-- Consider both fundamental and technical factors
-- Provide specific, actionable advice with clear reasoning
-- Include realistic profit targets and risk assessments
-- Account for market volatility and potential black swan events
-- Ensure recommendations align with the specified risk tolerance
+**CRITICAL SUCCESS FACTORS:**
+- ✅ Base ALL recommendations on the provided real-time market data
+- ✅ Provide specific, quantifiable advice with exact prices and percentages
+- ✅ Include realistic profit targets with probability assessments
+- ✅ Account for transaction costs, slippage, and tax implications
+- ✅ Consider market volatility and provide contingency scenarios
+- ✅ Ensure all recommendations align precisely with the ${risk}% risk tolerance
+- ✅ Include psychological aspects of trading and behavioral finance considerations
+- ✅ Provide educational context for all technical terms and strategies
 
-This analysis should serve as a comprehensive guide for making informed cryptocurrency investment decisions based on current market conditions and the specified investment parameters.
+**DELIVERABLE QUALITY STANDARDS:**
+- Professional-grade analysis suitable for institutional investors
+- Actionable insights with clear implementation steps
+- Risk-adjusted return expectations with scenario analysis
+- Comprehensive coverage of all major risk factors
+- Clear reasoning and methodology behind every recommendation
+
+This analysis should serve as a complete investment blueprint that could be implemented by a professional trader or sophisticated retail investor, providing both strategic direction and tactical execution guidance based on current market conditions.
 `
 
     // Generate a simple title without AI

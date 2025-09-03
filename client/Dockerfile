@@ -1,33 +1,37 @@
-# Build stage
+# Step 1: Build React app
 FROM node:20-alpine AS build
 
-# Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
 COPY package*.json ./
+RUN npm install
 
-# Install dependencies
-RUN npm ci
-
-# Copy the rest of the code
 COPY . .
-
-# Build the application
-RUN chmod +x node_modules/.bin/vite
 RUN npm run build
 
-# Production stage
+# Step 2: Serve with nginx
 FROM nginx:alpine
 
-# Copy the build output to replace the default nginx contents
+# Copy React build output to nginx html folder
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy custom nginx config if needed
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Add nginx config for SPA and /api proxy
+RUN echo 'server { \
+    listen 80; \
+    location / { \
+        root /usr/share/nginx/html; \
+        index index.html; \
+        try_files $uri /index.html; \
+    } \
+    location /api { \
+        proxy_pass http://server:8000; \
+        proxy_http_version 1.1; \
+        proxy_set_header Upgrade $http_upgrade; \
+        proxy_set_header Connection "upgrade"; \
+        proxy_set_header Host $host; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
 
-# Expose port 80
 EXPOSE 80
 
-# Start Nginx server
-CMD ["nginx", "-g", "daemon off;"] 
+CMD ["nginx", "-g", "daemon off;"]
