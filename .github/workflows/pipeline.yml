@@ -2,9 +2,7 @@ name: CI/CD Pipeline - Build & Deploy to Local Machine
 
 # =============================================================================
 # WHEN THIS PIPELINE RUNS
-# =========================================================================  deploy-local-machine:
-    name: 🏠 Deploy to Your Local Machine
-    runs-on: self-hosted=
+# =============================================================================
 # Triggers: Push to 'deploy-finadv' branch or manual workflow dispatch
 on:
   push:
