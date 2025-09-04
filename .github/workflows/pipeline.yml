@@ -226,7 +226,7 @@ jobs:
         cat > .env << EOF
         NODE_ENV=production
         PORT=8000
-        MONGODB_URI=mongodb://mongodb:27017/financial_advisor
+        MONGO_URI=mongodb://mongodb:27017/financial_advisor
         GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
         GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
         JWT_SECRET=${{ secrets.JWT_SECRET }}
