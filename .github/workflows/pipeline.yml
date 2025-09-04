@@ -4,16 +4,7 @@ name: CI/CD Pipeline - Build & Test & Deploy Locally
 # WHEN THIS PIPELINE RUNS
 # =============================================================================
 # Triggers: Push to 'deploy-finadv' branch
-# Ignores: Documen    # Step 10: Run frontend container
-    - name: 🏗️ Start Frontend container
-      run: |
-        docker run -d \
-          --name financial-adviser-client \
-          --network financial-adviser-network \
-          -p 3000:3000 \
-          ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
-    
-    # Step 11: Wait for containers to be readynges (*.md files)
+# Ignores: Documentation changes (*.md files)
 on:
   push:
     branches: [ deploy-finadv ]
@@ -52,7 +43,7 @@ jobs:
           frontend:
             - 'client/**'
             - 'package.json'
-            - '.github/workflows/ci.yml'
+            - '.github/workflows/pipeline.yml'
     
     # Step 3: Setup Node.js (only if frontend changed)
     - name: ⚙️ Setup Node.js 20
@@ -125,7 +116,7 @@ jobs:
           backend:
             - 'server/**'
             - 'package.json'
-            - '.github/workflows/ci.yml'
+            - '.github/workflows/pipeline.yml'
       
     # Step 3: Setup Node.js (only if backend changed)
     - name: ⚙️ Setup Node.js 20
