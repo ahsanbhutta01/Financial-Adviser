@@ -220,19 +220,7 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: 📝 Create environment file
-      run: |
-        cd server
-        cat > .env << EOF
-        NODE_ENV=production
-        PORT=8000
-        MONGO_URI=mongodb://mongodb:27017/financial_advisor
-        GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-        GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-        JWT_SECRET=${{ secrets.JWT_SECRET }}
-        EOF
-
-    - name: 🛑 Stop existing containers
+    - name:  Stop existing containers
       run: docker compose down || true
 
     - name: 📥 Pull latest images
