@@ -1,4 +1,4 @@
-name: CI/CD Pipeline - Build & Deploy to Local Machine  [TEST]
+name: CI/CD Pipeline - Build & Deploy to Local Machine 🚀
 
 # =============================================================================
 # WHEN THIS PIPELINE RUNS
@@ -220,7 +220,23 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name:  Stop existing containers
+    - name: 📝 Create environment file for deployment
+      run: |
+        cd server
+        cat > .env << EOF
+        MONGO_URI=mongodb://mongodb:27017/financial_advisor
+        PORT=8000
+        SECRET_KEY=${{ secrets.SECRET_KEY }}
+        GEMINI_API=${{ secrets.GEMINI_API }}
+        OPEN_ROUTER_API=${{ secrets.OPEN_ROUTER_API }}
+        GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+        GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+        CALLBACK_URL=http://localhost:8000/api/user/google/callback
+        FRONTEND_URL=http://localhost:5173
+        SESSION_SECRET=${{ secrets.SESSION_SECRET }}
+        EOF
+
+    - name: 🛑 Stop existing containers
       run: docker compose down || true
 
     - name: 📥 Pull latest images
