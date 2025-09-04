@@ -237,8 +237,8 @@ jobs:
         # Tag the built backend image
         docker tag $SERVER_IMAGE ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
         docker tag $SERVER_IMAGE ${{ env.IMAGE_NAME_SERVER }}:latest
-        docker push $SERVER_IMAGE ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
-        docker push $SERVER_IMAGE ${{ env.IMAGE_NAME_SERVER }}:latest
+        docker push ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
+        docker push ${{ env.IMAGE_NAME_SERVER }}:latest
 
   # =============================================================================
   # JOB 4: DEPLOY TO LOCAL MACHINE WITH DOCKER-COMPOSE
