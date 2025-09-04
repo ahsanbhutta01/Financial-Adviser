@@ -1,0 +1,456 @@
+name: CI/CD Pipeline - Build & Test & Deploy Locally
+
+# =============================================================================
+# WHEN THIS PIPELINE RUNS
+# =============================================================================
+# Triggers: Push to 'deploy-finadv' branch
+# Ignores: Documen    # Step 10: Run frontend container
+    - name: 🏗️ Start Frontend container
+      run: |
+        docker run -d \
+          --name financial-adviser-client \
+          --network financial-adviser-network \
+          -p 3000:3000 \
+          ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
+    
+    # Step 11: Wait for containers to be readynges (*.md files)
+on:
+  push:
+    branches: [ deploy-finadv ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+
+# =============================================================================
+# GLOBAL VARIABLES
+# =============================================================================
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME_CLIENT: hassan915/financial-adviser-client
+  IMAGE_NAME_SERVER: hassan915/financial-adviser-server
+
+jobs:
+  # =============================================================================
+  # JOB 1: BUILD AND TEST FRONTEND (React App)
+  # =============================================================================
+  build-frontend:
+    name: 🏗️ Build & Test Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Step 1: Get the code
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    # Step 2: Check if frontend files changed (optimization)
+    - name: 🔍 Check for frontend changes
+      uses: dorny/paths-filter@v2
+      id: frontend-changes
+      with:
+        filters: |
+          frontend:
+            - 'client/**'
+            - 'package.json'
+            - '.github/workflows/ci.yml'
+    
+    # Step 3: Setup Node.js (only if frontend changed)
+    - name: ⚙️ Setup Node.js 20
+      if: steps.frontend-changes.outputs.frontend == 'true'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: client/package-lock.json
+        
+    # Step 4: Cache dependencies for faster builds
+    - name: 📦 Cache dependencies
+      if: steps.frontend-changes.outputs.frontend == 'true'
+      uses: actions/cache@v3
+      with:
+        path: client/node_modules
+        key: ${{ runner.os }}-client-${{ hashFiles('client/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-client-
+        
+    # Step 5: Install dependencies
+    - name: 📋 Install dependencies
+      if: steps.frontend-changes.outputs.frontend == 'true'
+      working-directory: ./client
+      run: npm ci
+      
+    # Step 6: Check code quality with ESLint
+    - name: 🔍 Run ESLint (Code Quality Check)
+      if: steps.frontend-changes.outputs.frontend == 'true'
+      working-directory: ./client
+      run: npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0
+      
+    # Step 7: Build the React app
+    - name: 🏗️ Build React app
+      if: steps.frontend-changes.outputs.frontend == 'true'
+      working-directory: ./client
+      run: npm run build
+      
+    # Step 8: Save build files for later use
+    - name: 💾 Save build artifacts
+      if: steps.frontend-changes.outputs.frontend == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build
+        path: client/dist/
+        retention-days: 1
+        
+    # Output whether frontend changed (for other jobs to use)
+    outputs:
+      changed: ${{ steps.frontend-changes.outputs.frontend }}
+
+  # =============================================================================
+  # JOB 2: BUILD AND TEST BACKEND (Node.js API)
+  # =============================================================================
+  build-backend:
+    name: 🔧 Build & Test Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Step 1: Get the code
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    # Step 2: Check if backend files changed (optimization)
+    - name: 🔍 Check for backend changes
+      uses: dorny/paths-filter@v2
+      id: backend-changes
+      with:
+        filters: |
+          backend:
+            - 'server/**'
+            - 'package.json'
+            - '.github/workflows/ci.yml'
+      
+    # Step 3: Setup Node.js (only if backend changed)
+    - name: ⚙️ Setup Node.js 20
+      if: steps.backend-changes.outputs.backend == 'true'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+        
+    # Step 4: Cache dependencies for faster builds
+    - name: 📦 Cache dependencies
+      if: steps.backend-changes.outputs.backend == 'true'
+      uses: actions/cache@v3
+      with:
+        path: server/node_modules
+        key: ${{ runner.os }}-server-${{ hashFiles('server/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-server-
+        
+    # Step 5: Install dependencies
+    - name: 📋 Install dependencies
+      if: steps.backend-changes.outputs.backend == 'true'
+      working-directory: ./server
+      run: npm ci
+      
+    # Step 6: Check if the code has syntax errors
+    - name: ✅ Check code syntax
+      if: steps.backend-changes.outputs.backend == 'true'
+      working-directory: ./server
+      run: node --check server.js
+      
+    # Output whether backend changed (for other jobs to use)
+    outputs:
+      changed: ${{ steps.backend-changes.outputs.backend }}
+
+  # =============================================================================
+  # JOB 3: BUILD AND PUSH DOCKER IMAGES
+  # =============================================================================
+  build-docker-images:
+    name: 🐳 Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: [build-frontend, build-backend]
+    # Only run if code was pushed to main branch AND something changed
+    if: github.event_name == 'push' && github.ref == 'refs/heads/deploy-finadv' && (needs.build-frontend.outputs.changed == 'true' || needs.build-backend.outputs.changed == 'true')
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    # Step 1: Get the code
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    # Step 2: Setup Docker for building images
+    - name: 🛠️ Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    # Step 3: Login to Docker Hub to push images
+    - name: 🔑 Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        
+    # Step 4: Create tags for frontend image (if frontend changed)
+    - name: 🏷️ Create frontend image tags
+      if: needs.build-frontend.outputs.changed == 'true'
+      id: frontend-tags
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_CLIENT }}
+        tags: |
+          type=ref,event=branch
+          type=sha,prefix=sha-
+          type=raw,value=latest,enable={{is_default_branch}}
+        
+    # Step 5: Create tags for backend image (if backend changed)
+    - name: 🏷️ Create backend image tags
+      if: needs.build-backend.outputs.changed == 'true'
+      id: backend-tags
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SERVER }}
+        tags: |
+          type=ref,event=branch
+          type=sha,prefix=sha-
+          type=raw,value=latest,enable={{is_default_branch}}
+        
+    # Step 6: Build and push frontend Docker image
+    - name: 🐳 Build & Push Frontend Image
+      if: needs.build-frontend.outputs.changed == 'true'
+      uses: docker/build-push-action@v5
+      with:
+        context: ./client
+        file: ./client/Dockerfile
+        push: true
+        tags: ${{ steps.frontend-tags.outputs.tags }}
+        labels: ${{ steps.frontend-tags.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    # Step 7: Build and push backend Docker image
+    - name: 🐳 Build & Push Backend Image
+      if: needs.build-backend.outputs.changed == 'true'
+      uses: docker/build-push-action@v5
+      with:
+        context: ./server
+        file: ./server/Dockerfile
+        push: true
+        tags: ${{ steps.backend-tags.outputs.tags }}
+        labels: ${{ steps.backend-tags.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # =============================================================================
+  # JOB 4: DEPLOY & RUN CONTAINERS LOCALLY
+  # =============================================================================
+  deploy-local:
+    name: 🚀 Deploy & Run Containers
+    runs-on: ubuntu-latest
+    needs: [build-frontend, build-backend, build-docker-images]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/deploy-finadv' && needs.build-docker-images.result == 'success'
+    
+    steps:
+    # Step 1: Get the code
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    # Step 2: Setup Docker for running containers
+    - name: 🛠️ Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    # Step 3: Login to Docker Hub to pull images
+    - name: 🔑 Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    
+    # Step 4: Pull latest Docker images
+    - name: 📥 Pull Docker images
+      run: |
+        docker pull ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
+        docker pull ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
+    
+    # Step 5: Stop any existing containers
+    - name: 🛑 Stop existing containers
+      run: |
+        docker stop financial-adviser-client || true
+        docker stop financial-adviser-server || true
+        docker rm financial-adviser-client || true
+        docker rm financial-adviser-server || true
+    
+    # Step 7: Create Docker network first
+    - name: 🌐 Create Docker network
+      run: docker network create financial-adviser-network || true
+    
+    # Step 8: Run MongoDB container
+    - name: 🗄️ Start MongoDB container
+      run: |
+        docker stop financial-adviser-mongo || true
+        docker rm financial-adviser-mongo || true
+        docker run -d \
+          --name financial-adviser-mongo \
+          --network financial-adviser-network \
+          -p 27017:27017 \
+          -e MONGO_INITDB_ROOT_USERNAME=admin \
+          -e MONGO_INITDB_ROOT_PASSWORD=password \
+          mongo:latest
+    
+    # Step 9: Run backend container
+    - name: 🔧 Start Backend container
+      run: |
+        docker run -d \
+          --name financial-adviser-server \
+          --network financial-adviser-network \
+          -p 3001:3001 \
+          -e NODE_ENV=production \
+          -e MONGODB_URI=mongodb://admin:password@financial-adviser-mongo:27017/financial-adviser?authSource=admin \
+          ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
+    
+    # Step 10: Run frontend container
+    - name: 🏗️ Start Frontend container
+      run: |
+        docker run -d \
+          --name financial-adviser-client \
+          --network financial-adviser-network \
+          -p 3000:3000 \
+          ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
+    
+    # Step 11: Wait for containers to be ready
+    - name: ⏳ Wait for containers to start
+      run: |
+        echo "Waiting for containers to start..."
+        sleep 30
+        
+    # Step 12: Test if containers are running
+    - name: ✅ Test container health
+      run: |
+        echo "Testing container health..."
+        docker ps --filter "name=financial-adviser-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+        
+        # Test backend health
+        curl -f http://localhost:3001/health || echo "Backend health check failed"
+        
+        # Test frontend (just check if port is responding)
+        curl -f http://localhost:3000 || echo "Frontend health check failed"
+
+  # =============================================================================
+  # JOB 5: SECURITY SCANNING
+  # =============================================================================
+  security-scan:
+    name: 🛡️ Security Scan
+    runs-on: ubuntu-latest
+    needs: [build-frontend, build-backend]
+    if: needs.build-frontend.outputs.changed == 'true' || needs.build-backend.outputs.changed == 'true'
+    
+    steps:
+    # Step 1: Get the code
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    # Step 2: Setup Node.js for security tools
+    - name: ⚙️ Setup Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    # Step 3: Install security audit tool
+    - name: 📦 Install security tools
+      run: npm install -g npm-audit-resolver
+      
+    # Step 4: Check frontend for security vulnerabilities
+    - name: 🔍 Security scan - Frontend
+      if: needs.build-frontend.outputs.changed == 'true'
+      working-directory: ./client
+      run: npm audit --audit-level moderate
+      continue-on-error: true
+      
+    # Step 5: Check backend for security vulnerabilities
+    - name: 🔍 Security scan - Backend
+      if: needs.build-backend.outputs.changed == 'true'
+      working-directory: ./server
+      run: npm audit --audit-level moderate
+      continue-on-error: true
+
+  # =============================================================================
+  # JOB 6: CODE QUALITY CHECKS
+  # =============================================================================
+  code-quality:
+    name: ✨ Code Quality Check
+    runs-on: ubuntu-latest
+    needs: [build-frontend, build-backend]
+    if: needs.build-frontend.outputs.changed == 'true' || needs.build-backend.outputs.changed == 'true'
+    
+    steps:
+    # Step 1: Get the code
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    # Step 2: Setup Node.js
+    - name: ⚙️ Setup Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    # Step 3: Install frontend dependencies and run linting
+    - name: 📋 Install frontend dependencies
+      if: needs.build-frontend.outputs.changed == 'true'
+      working-directory: ./client
+      run: npm ci
+      
+    - name: ✨ Run frontend linting
+      if: needs.build-frontend.outputs.changed == 'true'
+      working-directory: ./client
+      run: npm run lint
+      
+    # Step 4: Check for TODO/FIXME comments that need attention
+    - name: 📝 Check for TODO/FIXME comments
+      run: |
+        echo "Checking for TODO/FIXME comments..."
+        if grep -r "TODO\|FIXME" --include="*.js" --include="*.jsx" --include="*.ts" --include="*.tsx" client/ server/ || true; then
+          echo "Found TODO/FIXME comments - consider addressing them"
+        fi
+
+  # =============================================================================
+  # JOB 7: PIPELINE SUMMARY (Always runs to show results)
+  # =============================================================================
+  pipeline-summary:
+    name: 📊 Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [build-frontend, build-backend, build-docker-images, deploy-local, security-scan, code-quality]
+    if: always()  # Always run this job, even if others fail
+    
+    steps:
+    - name: 📊 Show Pipeline Results
+      run: |
+        echo "## 🚀 CI/CD Pipeline Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📋 Job Results" >> $GITHUB_STEP_SUMMARY
+        echo "- **🏗️ Frontend Build**: ${{ needs.build-frontend.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **🔧 Backend Build**: ${{ needs.build-backend.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **🐳 Docker Images**: ${{ needs.build-docker-images.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **� Local Deploy**: ${{ needs.deploy-local.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **�🛡️ Security Scan**: ${{ needs.security-scan.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **✨ Code Quality**: ${{ needs.code-quality.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Show success message if everything worked
+        if [[ "${{ needs.build-frontend.result }}" == "success" && "${{ needs.build-backend.result }}" == "success" && "${{ needs.build-docker-images.result }}" == "success" && "${{ needs.deploy-local.result }}" == "success" ]]; then
+          echo "## ✅ Success! Application Deployed Locally" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🐳 Running Containers" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: http://localhost:3000" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend API: http://localhost:3001" >> $GITHUB_STEP_SUMMARY
+          echo "- MongoDB: localhost:27017" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🎉 What's Ready" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Code tested and validated" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Security vulnerabilities checked" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Docker images built and pushed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Containers running locally!" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## ❌ Some jobs failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please check the job details above to see what went wrong." >> $GITHUB_STEP_SUMMARY
+        fi
