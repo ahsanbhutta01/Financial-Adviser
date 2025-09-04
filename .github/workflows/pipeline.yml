@@ -3,7 +3,6 @@ name: CI/CD Pipeline - Build & Deploy to Local Machine 🚀
 # =============================================================================
 # WHEN THIS PIPELINE RUNS
 # =============================================================================
-# Triggers: Push to 'deploy-finadv' branch or manual workflow dispatch
 on:
   push:
     branches: [deploy-finadv]
@@ -150,32 +149,23 @@ jobs:
 
     - name: 🏗️ Build images with docker-compose
       run: |
-        # Build all services using docker compose
         docker compose build
-        
-        # List built images for debugging
         echo "=== Built Images ==="
         docker images | grep financial-adviser || docker images
 
     - name: 🏷️ Tag and push frontend image
       if: needs.build-frontend.outputs.changed == 'true'
       run: |
-        # Tag the built frontend image (docker compose creates images with folder_service format)
         docker tag financial-adviser_client:latest ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
         docker tag financial-adviser_client:latest ${{ env.IMAGE_NAME_CLIENT }}:latest
-        
-        # Push frontend image
         docker push ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
         docker push ${{ env.IMAGE_NAME_CLIENT }}:latest
 
     - name: 🏷️ Tag and push backend image
       if: needs.build-backend.outputs.changed == 'true'
       run: |
-        # Tag the built backend image (docker compose creates images with folder_service format)
         docker tag financial-adviser_server:latest ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
         docker tag financial-adviser_server:latest ${{ env.IMAGE_NAME_SERVER }}:latest
-        
-        # Push backend image
         docker push ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
         docker push ${{ env.IMAGE_NAME_SERVER }}:latest
 
@@ -234,8 +224,6 @@ jobs:
     - name: ⏳ Wait for services to start
       run: |
         echo "Waiting for services to start..."
-        
-        # Wait for backend to be ready
         echo "Checking backend health..."
         for i in {1..30}; do
           if curl -f http://localhost:8000/api/health >/dev/null 2>&1; then
@@ -245,11 +233,9 @@ jobs:
           echo "Attempt $i/30: Backend not ready yet, waiting 2 seconds..."
           sleep 2
         done
-        
-        # Wait for frontend to be ready
         echo "Checking frontend..."
         for i in {1..30}; do
-          if curl -f http://localhost:5173 >/dev/null 2>&1; then
+          if curl -f http://localhost >/dev/null 2>&1; then
             echo "✅ Frontend is ready!"
             break
           fi
@@ -261,16 +247,11 @@ jobs:
       run: |
         echo "=== Container Status ==="
         docker compose ps
-        
         echo "=== Final Health Check ==="
-        # Test backend health
         curl -f http://localhost:8000/api/health || echo "❌ Backend health check failed"
-        
-        # Test frontend
-        curl -f http://localhost:5173 || echo "❌ Frontend health check failed"
-        
+        curl -f http://localhost || echo "❌ Frontend health check failed"
         echo "🎉 Application deployed successfully!"
-        echo "📱 Frontend: http://localhost:5173 (nginx on port 80, mapped to 5173)"
+        echo "📱 Frontend: http://localhost"
         echo "🔧 Backend: http://localhost:8000"
         echo "🗃️ MongoDB: localhost:27017"
 
@@ -366,7 +347,7 @@ jobs:
           echo "## ✅ Success! Application Deployed Locally" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🏠 Access Your Application" >> $GITHUB_STEP_SUMMARY
-          echo "- Frontend: http://localhost:5173 (nginx on port 80, mapped to 5173)" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: http://localhost" >> $GITHUB_STEP_SUMMARY
           echo "- Backend API: http://localhost:8000" >> $GITHUB_STEP_SUMMARY
           echo "- MongoDB: localhost:27017" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
