@@ -150,8 +150,8 @@ jobs:
 
     - name: 🏗️ Build images with docker-compose
       run: |
-        # Build all services using docker-compose
-        docker-compose build
+        # Build all services using docker compose
+        docker compose build
 
     - name: 🏷️ Tag and push frontend image
       if: needs.build-frontend.outputs.changed == 'true'
@@ -207,7 +207,7 @@ jobs:
         EOF
 
     - name: 🛑 Stop existing containers
-      run: docker-compose down || true
+      run: docker compose down || true
 
     - name: 📥 Pull latest images
       run: |
@@ -227,7 +227,7 @@ jobs:
         EOF
 
     - name: 🚀 Start all services with docker-compose
-      run: docker-compose up -d
+      run: docker compose up -d
 
     - name: ⏳ Wait for services to start
       run: |
@@ -237,7 +237,7 @@ jobs:
     - name: ✅ Health check
       run: |
         echo "=== Container Status ==="
-        docker-compose ps
+        docker compose ps
         
         echo "=== Testing Services ==="
         # Test backend health
