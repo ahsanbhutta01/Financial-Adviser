@@ -149,25 +149,57 @@ jobs:
 
     - name: 🏗️ Build images with docker-compose
       run: |
+        # Build all services using docker compose
         docker compose build
-        echo "=== Built Images ==="
-        docker images | grep financial-adviser || docker images
+        
+        # List built images for debugging
+        echo "=== All Docker Images ==="
+        docker images
+        
+        echo "=== Financial Adviser Images ==="
+        docker images | grep -i financial || echo "No financial-adviser images found"
+        
+        echo "=== Images with 'client' ==="
+        docker images | grep -i client || echo "No client images found"
+        
+        echo "=== Images with 'server' ==="
+        docker images | grep -i server || echo "No server images found"
 
     - name: 🏷️ Tag and push frontend image
       if: needs.build-frontend.outputs.changed == 'true'
       run: |
-        docker tag financial-adviser_client:latest ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
-        docker tag financial-adviser_client:latest ${{ env.IMAGE_NAME_CLIENT }}:latest
+        # Find the correct client image name
+        CLIENT_IMAGE=$(docker images --format "table {{.Repository}}:{{.Tag}}" | grep -E "(client|frontend)" | grep latest | head -1)
+        echo "Found client image: $CLIENT_IMAGE"
+        
+        if [ -z "$CLIENT_IMAGE" ]; then
+          echo "❌ No client image found! Available images:"
+          docker images
+          exit 1
+        fi
+        
+        # Tag the built frontend image
+        docker tag $CLIENT_IMAGE ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
+        docker tag $CLIENT_IMAGE ${{ env.IMAGE_NAME_CLIENT }}:latest
         docker push ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
         docker push ${{ env.IMAGE_NAME_CLIENT }}:latest
 
     - name: 🏷️ Tag and push backend image
       if: needs.build-backend.outputs.changed == 'true'
       run: |
-        docker tag financial-adviser_server:latest ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
-        docker tag financial-adviser_server:latest ${{ env.IMAGE_NAME_SERVER }}:latest
-        docker push ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
-        docker push ${{ env.IMAGE_NAME_SERVER }}:latest
+        # Find the correct server image name
+        SERVER_IMAGE=$(docker images --format "table {{.Repository}}:{{.Tag}}" | grep -E "(server|backend)" | grep latest | head -1)
+        echo "Found server image: $SERVER_IMAGE"
+        
+        if [ -z "$SERVER_IMAGE" ]; then
+          echo "❌ No server image found! Available images:"
+          docker images
+          exit 1
+        fi
+        
+        # Tag the built backend image
+        docker tag $SERVER_IMAGE ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
+        docker tag $SERVER_IMAGE ${{ env.IMAGE_NAME_SERVER }}:latest
 
   # =============================================================================
   # JOB 4: DEPLOY TO LOCAL MACHINE WITH DOCKER-COMPOSE
