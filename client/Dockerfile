@@ -17,6 +17,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 
 # Add nginx config for SPA and /api proxy
 RUN echo 'server { \
+RUN echo 'server { \
     listen 80; \
     location / { \
         root /usr/share/nginx/html; \
