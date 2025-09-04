@@ -2,7 +2,77 @@ name: CI/CD Pipeline - Build & Deploy to Local Machine 🚀
 
 # =============================================================================
 # WHEN THIS PIPELINE RUNS
-# =============================================================================
+# ===================================================================  # =============================================================================
+  # JOB 4: DEPLOY TO YOUR LOCAL MACHINE
+  # =============================================================================
+  deploy-local-machine:
+    name: 🏠 Deploy to Your Local Machine
+    runs-on: self-hosted
+    needs: [build-frontend, build-backend, build-docker-images]
+    if: needs.build-docker-images.result == 'success'
+    
+    steps:
+    # Step 1: Get the code
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    # Step 2: Create .env file with secrets
+    - name: 📝 Create environment file
+      run: |
+        cd server
+        cat > .env << EOF
+        NODE_ENV=production
+        PORT=8000
+        MONGODB_URI=mongodb://mongodb:27017/financial_advisor
+        GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+        GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+        JWT_SECRET=${{ secrets.JWT_SECRET }}
+        EOF
+    
+    # Step 3: Stop existing containers
+    - name: 🛑 Stop existing containers
+      run: docker-compose down || true
+    
+    # Step 4: Pull latest images and use them in docker-compose
+    - name: 📥 Update docker-compose with latest images
+      run: |
+        # Create override file to use pre-built images
+        cat > docker-compose.override.yml << EOF
+        services:
+          client:
+            image: ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
+            build: null
+          server:
+            image: ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
+            build: null
+        EOF
+    
+    # Step 5: Start all services with docker-compose
+    - name: 🚀 Start all services
+      run: docker-compose up -d
+    
+    # Step 6: Wait for containers to be ready
+    - name: ⏳ Wait for services to start
+      run: |
+        echo "Waiting for services to start..."
+        sleep 30
+        
+    # Step 7: Test if containers are running
+    - name: ✅ Test service health
+      run: |
+        echo "Testing service health..."
+        docker-compose ps
+        
+        # Test backend health
+        curl -f http://localhost:8000/health || echo "Backend health check failed"
+        
+        # Test frontend (just check if port is responding)
+        curl -f http://localhost:5173 || echo "Frontend health check failed"
+        
+        echo "🎉 Application is running on your local machine!"
+        echo "Frontend: http://localhost:5173"
+        echo "Backend: http://localhost:8000"
+        echo "MongoDB: localhost:27017"====
 # Triggers: Push to 'deploy-finadv' branch or manual workflow dispatch
 on:
   push:
@@ -238,96 +308,6 @@ jobs:
   deploy-local-machine:
     name: � Deploy to Your Local Machine
     runs-on: self-hosted
-    needs: [build-frontend, build-backend, build-docker-images]
-    if: needs.build-docker-images.result == 'success'
-    
-    steps:
-    # Step 1: Get the code
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      
-    # Step 2: Setup Docker for running containers
-    - name: 🛠️ Setup Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      
-    # Step 3: Login to Docker Hub to pull images
-    - name: 🔑 Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    
-    # Step 4: Pull latest Docker images
-    - name: 📥 Pull Docker images
-      run: |
-        docker pull ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
-        docker pull ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
-    
-    # Step 5: Stop any existing containers
-    - name: 🛑 Stop existing containers
-      run: |
-        docker stop financial-adviser-client || true
-        docker stop financial-adviser-server || true
-        docker rm financial-adviser-client || true
-        docker rm financial-adviser-server || true
-        docker stop financial-adviser-mongo || true
-        docker rm financial-adviser-mongo || true
-    
-    # Step 6: Create Docker network first
-    - name: 🌐 Create Docker network
-      run: docker network create financial-adviser-network || true
-    
-    # Step 7: Run MongoDB container
-    - name: 🗄️ Start MongoDB container
-      run: |
-        docker run -d \
-          --name financial-adviser-mongo \
-          --network financial-adviser-network \
-          -p 27017:27017 \
-          mongo:latest
-    
-    # Step 8: Run backend container
-    - name: 🔧 Start Backend container
-      run: |
-        docker run -d \
-          --name financial-adviser-server \
-          --network financial-adviser-network \
-          -p 8000:8000 \
-          -e NODE_ENV=production \
-          -e PORT=8000 \
-          -e MONGODB_URI=mongodb://financial-adviser-mongo:27017/financial-adviser \
-          ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
-    
-    # Step 9: Run frontend container
-    - name: 🏗️ Start Frontend container
-      run: |
-        docker run -d \
-          --name financial-adviser-client \
-          --network financial-adviser-network \
-          -p 5173:5173 \
-          ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
-    
-    # Step 10: Wait for containers to be ready
-    - name: ⏳ Wait for containers to start
-      run: |
-        echo "Waiting for containers to start..."
-        sleep 30
-        
-    # Step 11: Test if containers are running
-    - name: ✅ Test container health
-      run: |
-        echo "Testing container health..."
-        docker ps --filter "name=financial-adviser-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-        
-        # Test backend health
-        curl -f http://localhost:8000/health || echo "Backend health check failed"
-        
-        # Test frontend (just check if port is responding)
-        curl -f http://localhost:5173 || echo "Frontend health check failed"
-        
-        echo "🎉 Application is running on your local machine!"
-        echo "Frontend: http://localhost:5173"
-        echo "Backend: http://localhost:8000"
 
   # =============================================================================
   # JOB 5: SECURITY SCANNING
