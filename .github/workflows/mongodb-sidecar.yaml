@@ -1,0 +1,50 @@
+properties:
+  managedEnvironmentId: /subscriptions/SUBSCRIPTION_ID_PLACEHOLDER/resourceGroups/rg-financial-adviser/providers/Microsoft.App/managedEnvironments/financial-adviser
+  configuration:
+    ingress:
+      external: true
+      targetPort: 8000
+      transport: auto
+      traffic:
+      - weight: 100
+        latestRevision: true
+    activeRevisionsMode: Single
+  template:
+    containers:
+    - name: backend
+      image: SERVER_IMAGE_PLACEHOLDER
+      env:
+      - name: MONGO_URI
+        value: "mongodb://admin:MONGO_PASSWORD_PLACEHOLDER@mongodb-sidecar:27017/financial-adviser?authSource=admin"
+      - name: PORT
+        value: "8000"
+      - name: SECRET_KEY
+        value: "SECRET_KEY_PLACEHOLDER"
+      - name: GEMINI_API
+        value: "GEMINI_API_PLACEHOLDER"
+      - name: OPEN_ROUTER_API
+        value: "OPEN_ROUTER_API_PLACEHOLDER"
+      - name: GOOGLE_CLIENT_ID
+        value: "GOOGLE_CLIENT_ID_PLACEHOLDER"
+      - name: GOOGLE_CLIENT_SECRET
+        value: "GOOGLE_CLIENT_SECRET_PLACEHOLDER"
+      - name: SESSION_SECRET
+        value: "SESSION_SECRET_PLACEHOLDER"
+      resources:
+        cpu: 0.5
+        memory: 1Gi
+    - name: mongodb-sidecar
+      image: mongo:7.0
+      env:
+      - name: MONGO_INITDB_DATABASE
+        value: "financial-adviser"
+      - name: MONGO_INITDB_ROOT_USERNAME
+        value: "admin"
+      - name: MONGO_INITDB_ROOT_PASSWORD
+        value: "MONGO_PASSWORD_PLACEHOLDER"
+      resources:
+        cpu: 0.5
+        memory: 1Gi
+    scale:
+      minReplicas: 1
+      maxReplicas: 2
