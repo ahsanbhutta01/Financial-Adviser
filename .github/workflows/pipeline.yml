@@ -151,7 +151,7 @@ jobs:
           --image mongo:7.0 \
           --cpu 0.5 \
           --memory 1Gi \
-          --env-vars \
+          --set-env-vars \
             MONGO_INITDB_DATABASE="financial-adviser" \
             MONGO_INITDB_ROOT_USERNAME="admin" \
             MONGO_INITDB_ROOT_PASSWORD="${{ secrets.MONGO_ROOT_PASSWORD || 'MongoSecure123' }}"
