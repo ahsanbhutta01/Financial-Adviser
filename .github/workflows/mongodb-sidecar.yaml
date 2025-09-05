@@ -4,6 +4,7 @@ properties:
     ingress:
       external: true
       targetPort: 8000
+      transport: auto
       traffic:
       - weight: 100
         latestRevision: true
@@ -14,7 +15,7 @@ properties:
       image: SERVER_IMAGE_PLACEHOLDER
       env:
       - name: MONGO_URI
-        value: "mongodb://admin:MONGO_PASSWORD_PLACEHOLDER@mongodb-sidecar:27017/financial-adviser?authSource=admin"
+        value: "mongodb://admin:MONGO_PASSWORD_PLACEHOLDER@localhost:27017/financial-adviser?authSource=admin"
       - name: PORT
         value: "8000"
       - name: SECRET_KEY
@@ -32,6 +33,13 @@ properties:
       resources:
         cpu: 0.5
         memory: 1Gi
+      probes:
+      - type: readiness
+        httpGet:
+          path: "/api/health"
+          port: 8000
+        initialDelaySeconds: 30
+        periodSeconds: 10
     - name: mongodb-sidecar
       image: mongo:7.0
       env:
@@ -44,6 +52,15 @@ properties:
       resources:
         cpu: 0.5
         memory: 1Gi
+      probes:
+      - type: readiness
+        exec:
+          command:
+          - mongosh
+          - --eval
+          - "db.adminCommand('ping')"
+        initialDelaySeconds: 15
+        periodSeconds: 10
     scale:
       minReplicas: 1
       maxReplicas: 2
