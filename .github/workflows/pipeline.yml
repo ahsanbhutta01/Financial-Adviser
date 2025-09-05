@@ -169,30 +169,11 @@ jobs:
 
     - name: 📱 Deploy Frontend Container
       run: |
-        # Get backend URL for frontend build
-        BACKEND_URL=$(az containerapp show --name financial-adviser-server --resource-group rg-financial-adviser --query properties.configuration.ingress.fqdn --output tsv)
-        
-        # Build frontend with backend URL
-        echo "Building frontend with backend URL: https://$BACKEND_URL"
-        
-        # Create production env file with actual backend URL
-        echo "VITE_API_URL=https://$BACKEND_URL/api" > /tmp/frontend.env
-        echo "VITE_APP_NAME=Financial Adviser" >> /tmp/frontend.env
-        echo "VITE_APP_VERSION=1.0.0" >> /tmp/frontend.env
-        
-        # Rebuild and push frontend with correct backend URL
-        cd client
-        cp /tmp/frontend.env .env.production
-        docker build -t ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}-updated .
-        docker push ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}-updated
-        cd ..
-        
-        # Deploy frontend with updated image
         az containerapp create \
           --name financial-adviser-client \
           --resource-group rg-financial-adviser \
           --environment financial-adviser \
-          --image ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}-updated \
+          --image ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }} \
           --target-port 80 \
           --ingress external \
           --min-replicas 1 \
@@ -203,7 +184,7 @@ jobs:
         az containerapp update \
           --name financial-adviser-client \
           --resource-group rg-financial-adviser \
-          --image ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}-updated \
+          --image ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }} \
           --revision-suffix $(date +%s)
 
     - name: 🔄 Update Backend with Frontend URL
