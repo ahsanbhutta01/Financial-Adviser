@@ -120,41 +120,37 @@ jobs:
         # Delete existing backend container if it exists to ensure clean deployment
         az containerapp delete --name financial-adviser-server --resource-group rg-financial-adviser --yes || echo "Backend container doesn't exist"
         
-        # Set variables for YAML template
-        SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-        SERVER_IMAGE="${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}"
-        SECRET_KEY_VAL="${{ secrets.SECRET_KEY }}"
-        GEMINI_API_VAL="${{ secrets.GEMINI_API }}"
-        OPEN_ROUTER_API_VAL="${{ secrets.OPEN_ROUTER_API }}"
-        GOOGLE_CLIENT_ID_VAL="${{ secrets.GOOGLE_CLIENT_ID }}"
-        GOOGLE_CLIENT_SECRET_VAL="${{ secrets.GOOGLE_CLIENT_SECRET }}"
-        SESSION_SECRET_VAL="${{ secrets.SESSION_SECRET }}"
-        MONGO_PASSWORD="${{ secrets.MONGO_ROOT_PASSWORD || 'MongoSecure123' }}"
-        
-        # Copy and customize the MongoDB sidecar YAML template
-        cp .github/workflows/mongodb-sidecar.yaml backend-sidecar.yaml
-        
-        # Replace placeholders with actual values
-        sed -i "s|SUBSCRIPTION_ID_PLACEHOLDER|${SUBSCRIPTION_ID}|g" backend-sidecar.yaml
-        sed -i "s|SERVER_IMAGE_PLACEHOLDER|${SERVER_IMAGE}|g" backend-sidecar.yaml
-        sed -i "s|SECRET_KEY_PLACEHOLDER|${SECRET_KEY_VAL}|g" backend-sidecar.yaml
-        sed -i "s|GEMINI_API_PLACEHOLDER|${GEMINI_API_VAL}|g" backend-sidecar.yaml
-        sed -i "s|OPEN_ROUTER_API_PLACEHOLDER|${OPEN_ROUTER_API_VAL}|g" backend-sidecar.yaml
-        sed -i "s|GOOGLE_CLIENT_ID_PLACEHOLDER|${GOOGLE_CLIENT_ID_VAL}|g" backend-sidecar.yaml
-        sed -i "s|GOOGLE_CLIENT_SECRET_PLACEHOLDER|${GOOGLE_CLIENT_SECRET_VAL}|g" backend-sidecar.yaml
-        sed -i "s|SESSION_SECRET_PLACEHOLDER|${SESSION_SECRET_VAL}|g" backend-sidecar.yaml
-        sed -i "s|MONGO_PASSWORD_PLACEHOLDER|${MONGO_PASSWORD}|g" backend-sidecar.yaml
-        
-        # Display the final YAML for debugging
-        echo "=== Generated YAML Configuration ==="
-        cat backend-sidecar.yaml
-        echo "=== End of YAML Configuration ==="
-        
-        # Deploy using YAML template
+        # Deploy backend container first
         az containerapp create \
           --name financial-adviser-server \
           --resource-group rg-financial-adviser \
-          --yaml backend-sidecar.yaml
+          --environment financial-adviser \
+          --image ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }} \
+          --target-port 8000 \
+          --ingress external \
+          --min-replicas 1 \
+          --max-replicas 2 \
+          --cpu 0.5 \
+          --memory 1Gi \
+          --env-vars \
+            MONGO_URI="mongodb://mongodb-sidecar:27017/financial-adviser" \
+            PORT=8000 \
+            SECRET_KEY="${{ secrets.SECRET_KEY }}" \
+            GEMINI_API="${{ secrets.GEMINI_API }}" \
+            OPEN_ROUTER_API="${{ secrets.OPEN_ROUTER_API }}" \
+            GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+            SESSION_SECRET="${{ secrets.SESSION_SECRET }}"
+        
+        # Add MongoDB sidecar container to the same app
+        az containerapp container add \
+          --name financial-adviser-server \
+          --resource-group rg-financial-adviser \
+          --container-name mongodb-sidecar \
+          --image mongo:7.0 \
+          --cpu 0.5 \
+          --memory 1Gi \
+          --env-vars MONGO_INITDB_DATABASE="financial-adviser"
 
     - name: 🌐 Get Backend URL and Update Frontend Config
       id: backend-url

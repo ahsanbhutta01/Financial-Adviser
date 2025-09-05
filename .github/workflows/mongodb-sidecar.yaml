@@ -4,7 +4,6 @@ properties:
     ingress:
       external: true
       targetPort: 8000
-      transport: auto
       traffic:
       - weight: 100
         latestRevision: true
