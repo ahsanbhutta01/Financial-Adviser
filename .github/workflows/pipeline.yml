@@ -1,4 +1,4 @@
-name: CI/CD Pipeline - Build & Deploy to Local Machine 🚀
+name: CI/CD Pipeline - Build & Deploy to Azure ☁️
 
 # =============================================================================
 # WHEN THIS PIPELINE RUNS
@@ -53,126 +53,13 @@ jobs:
             - 'docker-compose*.yml'
 
   # =============================================================================
-  # JOB 1: BUILD AND TEST FRONTEND (React App)
-  # =============================================================================
-  build-frontend:
-    name: 🏗️ Build & Test Frontend
-    runs-on: ubuntu-latest
-    needs: [detect-changes]
-    if: needs.detect-changes.outputs.has-code-changes == 'true'
-
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-
-    - name: 🔍 Check for frontend changes
-      uses: dorny/paths-filter@v2
-      id: frontend-changes
-      with:
-        filters: |
-          frontend:
-            - 'client/**'
-            - 'package.json'
-            - '.github/workflows/pipeline.yml'
-            - 'docker-compose*.yml'
-
-    - name: ⚙️ Setup Node.js 20
-      if: steps.frontend-changes.outputs.frontend == 'true'
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: client/package-lock.json
-
-    - name: 📦 Cache dependencies
-      if: steps.frontend-changes.outputs.frontend == 'true'
-      uses: actions/cache@v3
-      with:
-        path: client/node_modules
-        key: ${{ runner.os }}-client-${{ hashFiles('client/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-client-
-
-    - name: 📋 Install dependencies
-      if: steps.frontend-changes.outputs.frontend == 'true'
-      working-directory: ./client
-      run: npm ci
-
-    - name: 🔍 Run ESLint (Code Quality Check)
-      if: steps.frontend-changes.outputs.frontend == 'true'
-      working-directory: ./client
-      run: npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0
-
-    - name: 🏗️ Build React app
-      if: steps.frontend-changes.outputs.frontend == 'true'
-      working-directory: ./client
-      run: npm run build
-
-    outputs:
-      changed: ${{ steps.frontend-changes.outputs.frontend }}
-
-  # =============================================================================
-  # JOB 2: BUILD AND TEST BACKEND (Node.js API)
-  # =============================================================================
-  build-backend:
-    name: 🔧 Build & Test Backend
-    runs-on: ubuntu-latest
-    needs: [detect-changes]
-    if: needs.detect-changes.outputs.has-code-changes == 'true'
-
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-
-    - name: 🔍 Check for backend changes
-      uses: dorny/paths-filter@v2
-      id: backend-changes
-      with:
-        filters: |
-          backend:
-            - 'server/**'
-            - 'package.json'
-            - '.github/workflows/pipeline.yml'
-            - 'docker-compose*.yml'
-
-    - name: ⚙️ Setup Node.js 20
-      if: steps.backend-changes.outputs.backend == 'true'
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: server/package-lock.json
-
-    - name: 📦 Cache dependencies
-      if: steps.backend-changes.outputs.backend == 'true'
-      uses: actions/cache@v3
-      with:
-        path: server/node_modules
-        key: ${{ runner.os }}-server-${{ hashFiles('server/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-server-
-
-    - name: 📋 Install dependencies
-      if: steps.backend-changes.outputs.backend == 'true'
-      working-directory: ./server
-      run: npm ci
-
-    - name: ✅ Check code syntax
-      if: steps.backend-changes.outputs.backend == 'true'
-      working-directory: ./server
-      run: node --check server.js
-
-    outputs:
-      changed: ${{ steps.backend-changes.outputs.backend }}
-
-  # =============================================================================
-  # JOB 3: BUILD & PUSH DOCKER IMAGES WITH DOCKER-COMPOSE
+  # JOB 1: BUILD & PUSH DOCKER IMAGES WITH DOCKER-COMPOSE
   # =============================================================================
   docker-build-and-push:
     name: 🐳 Docker Build & Push
     runs-on: ubuntu-latest
-    needs: [build-frontend, build-backend]
-    if: always() && (needs.build-frontend.outputs.changed == 'true' || needs.build-backend.outputs.changed == 'true')
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.has-code-changes == 'true'
 
     steps:
     - name: 📥 Checkout code
@@ -194,216 +81,177 @@ jobs:
         docker images
         
         echo "=== Financial Adviser Images ==="
-        docker images | grep -i financial || echo "No financial-adviser images found"
-        
-        echo "=== Images with 'client' ==="
-        docker images | grep -i client || echo "No client images found"
-        
-        echo "=== Images with 'server' ==="
-        docker images | grep -i server || echo "No server images found"
+        docker images | grep hassan915/financial-adviser || echo "No financial-adviser images found"
 
-    - name: 🏷️ Tag and push frontend image
-      if: needs.build-frontend.outputs.changed == 'true' && needs.build-frontend.result == 'success'
+    - name: 🏷️ Tag and push images
       run: |
-        # Find the correct client image name
-        CLIENT_IMAGE=$(docker images --format "table {{.Repository}}:{{.Tag}}" | grep -E "(client|frontend)" | grep latest | head -1)
-        echo "Found client image: $CLIENT_IMAGE"
+        # Tag with branch name and push
+        docker tag hassan915/financial-adviser-client:latest hassan915/financial-adviser-client:${{ github.ref_name }}
+        docker tag hassan915/financial-adviser-server:latest hassan915/financial-adviser-server:${{ github.ref_name }}
         
-        if [ -z "$CLIENT_IMAGE" ]; then
-          echo "❌ No client image found! Available images:"
-          docker images
-          exit 1
-        fi
+        # Push all tags
+        docker push hassan915/financial-adviser-client:latest
+        docker push hassan915/financial-adviser-client:${{ github.ref_name }}
+        docker push hassan915/financial-adviser-server:latest
+        docker push hassan915/financial-adviser-server:${{ github.ref_name }}
         
-        # Tag the built frontend image
-        docker tag $CLIENT_IMAGE ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
-        docker tag $CLIENT_IMAGE ${{ env.IMAGE_NAME_CLIENT }}:latest
-        docker push ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
-        docker push ${{ env.IMAGE_NAME_CLIENT }}:latest
-
-    - name: 🏷️ Tag and push backend image
-      if: needs.build-backend.outputs.changed == 'true' && needs.build-backend.result == 'success'
-      run: |
-        # Find the correct server image name
-        SERVER_IMAGE=$(docker images --format "table {{.Repository}}:{{.Tag}}" | grep -E "(server|backend)" | grep latest | head -1)
-        echo "Found server image: $SERVER_IMAGE"
-        
-        if [ -z "$SERVER_IMAGE" ]; then
-          echo "❌ No server image found! Available images:"
-          docker images
-          exit 1
-        fi
-        
-        # Tag the built backend image
-        docker tag $SERVER_IMAGE ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
-        docker tag $SERVER_IMAGE ${{ env.IMAGE_NAME_SERVER }}:latest
-        docker push ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
-        docker push ${{ env.IMAGE_NAME_SERVER }}:latest
+        echo "✅ All images pushed successfully!"
 
   # =============================================================================
-  # JOB 4: DEPLOY TO LOCAL MACHINE WITH DOCKER-COMPOSE
+  # JOB 2: DEPLOY TO AZURE CONTAINER APPS
   # =============================================================================
-  deploy-local-machine:
-    name: 🏠 Deploy to Local Machine
-    runs-on: self-hosted
-    needs: [build-frontend, build-backend, docker-build-and-push]
-    if: always() && (needs.docker-build-and-push.result == 'success' || (needs.build-frontend.result == 'success' && needs.build-backend.result == 'success'))
-
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-
-    - name: 🔑 Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-    - name: 📝 Create environment file for deployment
-      run: |
-        cd server
-        cat > .env << EOF
-        MONGO_URI=mongodb://mongodb:27017/financial_advisor
-        PORT=8000
-        SECRET_KEY=${{ secrets.SECRET_KEY }}
-        GEMINI_API=${{ secrets.GEMINI_API }}
-        OPEN_ROUTER_API=${{ secrets.OPEN_ROUTER_API }}
-        GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-        GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-        CALLBACK_URL=http://localhost:8000/api/user/google/callback
-        FRONTEND_URL=http://localhost:5173
-        SESSION_SECRET=${{ secrets.SESSION_SECRET }}
-        EOF
-
-    - name: 🛑 Stop existing containers
-      run: docker compose down || true
-
-    - name: 📥 Pull latest images
-      if: needs.docker-build-and-push.result == 'success'
-      run: |
-        docker pull ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }} || true
-        docker pull ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }} || true
-
-    - name: 📝 Create docker-compose override for production images
-      if: needs.docker-build-and-push.result == 'success'
-      run: |
-        cat > docker-compose.override.yml << EOF
-        services:
-          client:
-            image: ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}
-          server:
-            image: ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}
-        EOF
-
-    - name: 🚀 Start all services with docker-compose
-      run: docker compose up -d
-
-    - name: ⏳ Wait for services to start
-      run: |
-        echo "Waiting for services to start..."
-        echo "Checking backend health..."
-        for i in {1..30}; do
-          if curl -f http://localhost:8000/api/health >/dev/null 2>&1; then
-            echo "✅ Backend is ready!"
-            break
-          fi
-          echo "Attempt $i/30: Backend not ready yet, waiting 2 seconds..."
-          sleep 2
-        done
-        echo "Checking frontend..."
-        for i in {1..30}; do
-          if curl -f http://localhost >/dev/null 2>&1; then
-            echo "✅ Frontend is ready!"
-            break
-          fi
-          echo "Attempt $i/30: Frontend not ready yet, waiting 2 seconds..."
-          sleep 2
-        done
-
-    - name: ✅ Health check
-      run: |
-        echo "=== Container Status ==="
-        docker compose ps
-        echo "=== Final Health Check ==="
-        curl -f http://localhost:8000/api/health || echo "❌ Backend health check failed"
-        curl -f http://localhost || echo "❌ Frontend health check failed"
-        echo "🎉 Application deployed successfully!"
-        echo "📱 Frontend: http://localhost"
-        echo "🔧 Backend: http://localhost:8000"
-        echo "🗃️ MongoDB: localhost:27017"
-
-  # =============================================================================
-  # JOB 5: SECURITY SCANNING (Only when code changes)
-  # =============================================================================
-  security-scan:
-    name: 🛡️ Security Scan
+  deploy-azure:
+    name: ☁️ Deploy to Azure Container Apps
     runs-on: ubuntu-latest
-    needs: [build-frontend, build-backend]
-    if: always() && (needs.build-frontend.outputs.changed == 'true' || needs.build-backend.outputs.changed == 'true')
+    needs: [docker-build-and-push]
+    if: needs.docker-build-and-push.result == 'success'
 
     steps:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
 
-    - name: ⚙️ Setup Node.js 20
-      uses: actions/setup-node@v4
+    - name: 🔑 Login to Azure
+      uses: azure/login@v1
       with:
-        node-version: '20'
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: 🔍 Security scan - Frontend
-      if: needs.build-frontend.outputs.changed == 'true'
-      working-directory: ./client
-      run: npm audit --audit-level moderate
-      continue-on-error: true
-
-    - name: 🔍 Security scan - Backend
-      if: needs.build-backend.outputs.changed == 'true'
-      working-directory: ./server
-      run: npm audit --audit-level moderate
-      continue-on-error: true
-
-  # =============================================================================
-  # JOB 6: CODE QUALITY CHECKS (Only when code changes)
-  # =============================================================================
-  code-quality:
-    name: ✨ Code Quality Check
-    runs-on: ubuntu-latest
-    needs: [build-frontend, build-backend]
-    if: always() && (needs.build-frontend.outputs.changed == 'true' || needs.build-backend.outputs.changed == 'true')
-
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-
-    - name: ⚙️ Setup Node.js 20
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-
-    - name: 📋 Install frontend dependencies
-      if: needs.build-frontend.outputs.changed == 'true'
-      working-directory: ./client
-      run: npm ci
-
-    - name: ✨ Run frontend linting
-      if: needs.build-frontend.outputs.changed == 'true'
-      working-directory: ./client
-      run: npm run lint
-
-    - name: 📝 Check for TODO/FIXME comments
+    - name: 🗃️ Deploy MongoDB Container
       run: |
-        echo "Checking for TODO/FIXME comments..."
-        if grep -r "TODO\|FIXME" --include="*.js" --include="*.jsx" --include="*.ts" --include="*.tsx" client/ server/ || true; then
-          echo "Found TODO/FIXME comments - consider addressing them"
-        fi
+        az containerapp create \
+          --name mongodb \
+          --resource-group rg-financial-adviser \
+          --environment financial-adviser \
+          --image mongo:latest \
+          --target-port 27017 \
+          --ingress internal \
+          --min-replicas 1 \
+          --max-replicas 1 \
+          --cpu 0.5 \
+          --memory 1Gi \
+          --env-vars MONGO_INITDB_DATABASE=financial_advisor \
+          --revision-suffix $(date +%s) || echo "MongoDB already exists, updating..."
+
+    - name: 🔧 Deploy Backend Container
+      run: |
+        az containerapp create \
+          --name financial-adviser-server \
+          --resource-group rg-financial-adviser \
+          --environment financial-adviser \
+          --image ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }} \
+          --target-port 8000 \
+          --ingress external \
+          --min-replicas 1 \
+          --max-replicas 2 \
+          --cpu 0.5 \
+          --memory 1Gi \
+          --env-vars \
+            MONGO_URI="mongodb://mongodb:27017/financial_advisor" \
+            PORT=8000 \
+            SECRET_KEY="${{ secrets.SECRET_KEY }}" \
+            GEMINI_API="${{ secrets.GEMINI_API }}" \
+            OPEN_ROUTER_API="${{ secrets.OPEN_ROUTER_API }}" \
+            GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+            SESSION_SECRET="${{ secrets.SESSION_SECRET }}" \
+          --revision-suffix $(date +%s) || \
+        az containerapp update \
+          --name financial-adviser-server \
+          --resource-group rg-financial-adviser \
+          --image ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }} \
+          --revision-suffix $(date +%s)
+
+    - name: 🌐 Get Backend URL and Update Frontend Config
+      id: backend-url
+      run: |
+        BACKEND_URL=$(az containerapp show --name financial-adviser-server --resource-group rg-financial-adviser --query properties.configuration.ingress.fqdn --output tsv)
+        echo "BACKEND_URL=https://$BACKEND_URL" >> $GITHUB_OUTPUT
+        echo "Backend URL: https://$BACKEND_URL"
+
+    - name: 📱 Deploy Frontend Container
+      run: |
+        # Get backend URL for frontend build
+        BACKEND_URL=$(az containerapp show --name financial-adviser-server --resource-group rg-financial-adviser --query properties.configuration.ingress.fqdn --output tsv)
+        
+        # Build frontend with backend URL
+        echo "Building frontend with backend URL: https://$BACKEND_URL"
+        
+        # Create production env file with actual backend URL
+        echo "VITE_API_URL=https://$BACKEND_URL/api" > /tmp/frontend.env
+        echo "VITE_APP_NAME=Financial Adviser" >> /tmp/frontend.env
+        echo "VITE_APP_VERSION=1.0.0" >> /tmp/frontend.env
+        
+        # Rebuild and push frontend with correct backend URL
+        cd client
+        cp /tmp/frontend.env .env.production
+        docker build -t ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}-updated .
+        docker push ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}-updated
+        cd ..
+        
+        # Deploy frontend with updated image
+        az containerapp create \
+          --name financial-adviser-client \
+          --resource-group rg-financial-adviser \
+          --environment financial-adviser \
+          --image ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}-updated \
+          --target-port 80 \
+          --ingress external \
+          --min-replicas 1 \
+          --max-replicas 2 \
+          --cpu 0.25 \
+          --memory 0.5Gi \
+          --revision-suffix $(date +%s) || \
+        az containerapp update \
+          --name financial-adviser-client \
+          --resource-group rg-financial-adviser \
+          --image ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }}-updated \
+          --revision-suffix $(date +%s)
+
+    - name: 🔄 Update Backend with Frontend URL
+      run: |
+        FRONTEND_URL=$(az containerapp show --name financial-adviser-client --resource-group rg-financial-adviser --query properties.configuration.ingress.fqdn --output tsv)
+        BACKEND_URL="${{ steps.backend-url.outputs.BACKEND_URL }}"
+        
+        az containerapp update \
+          --name financial-adviser-server \
+          --resource-group rg-financial-adviser \
+          --set-env-vars \
+            MONGO_URI="mongodb://mongodb:27017/financial_advisor" \
+            PORT=8000 \
+            SECRET_KEY="${{ secrets.SECRET_KEY }}" \
+            GEMINI_API="${{ secrets.GEMINI_API }}" \
+            OPEN_ROUTER_API="${{ secrets.OPEN_ROUTER_API }}" \
+            GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+            CALLBACK_URL="${BACKEND_URL}/api/user/google/callback" \
+            FRONTEND_URL="https://$FRONTEND_URL" \
+            SESSION_SECRET="${{ secrets.SESSION_SECRET }}" \
+          --revision-suffix $(date +%s)
+
+    - name: ✅ Azure Deployment Summary
+      run: |
+        echo "🎉 Deployment completed successfully!"
+        
+        FRONTEND_URL=$(az containerapp show --name financial-adviser-client --resource-group rg-financial-adviser --query properties.configuration.ingress.fqdn --output tsv)
+        BACKEND_URL=$(az containerapp show --name financial-adviser-server --resource-group rg-financial-adviser --query properties.configuration.ingress.fqdn --output tsv)
+        
+        echo "📱 Frontend URL: https://$FRONTEND_URL"
+        echo "🔧 Backend URL: https://$BACKEND_URL"
+        echo "🗃️ MongoDB: Internal (mongodb:27017)"
+        
+        echo "## ☁️ Azure Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🌐 Live Application URLs" >> $GITHUB_STEP_SUMMARY
+        echo "- **Frontend**: https://$FRONTEND_URL" >> $GITHUB_STEP_SUMMARY
+        echo "- **Backend API**: https://$BACKEND_URL" >> $GITHUB_STEP_SUMMARY
+        echo "- **MongoDB**: Internal container (mongodb:27017)" >> $GITHUB_STEP_SUMMARY
 
   # =============================================================================
-  # JOB 7: PIPELINE SUMMARY
+  # JOB 3: PIPELINE SUMMARY
   # =============================================================================
   pipeline-summary:
     name: 📊 Pipeline Summary
     runs-on: ubuntu-latest
-    needs: [detect-changes, build-frontend, build-backend, docker-build-and-push, deploy-local-machine, security-scan, code-quality]
+    needs: [detect-changes, docker-build-and-push, deploy-azure]
     if: always()
 
     steps:
@@ -421,26 +269,20 @@ jobs:
         fi
         
         echo "### 📋 Job Results" >> $GITHUB_STEP_SUMMARY
-        echo "- **🏗️ Frontend Build**: ${{ needs.build-frontend.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **🔧 Backend Build**: ${{ needs.build-backend.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
         echo "- **🐳 Docker Build & Push**: ${{ needs.docker-build-and-push.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **🏠 Local Deploy**: ${{ needs.deploy-local-machine.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **🛡️ Security Scan**: ${{ needs.security-scan.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **✨ Code Quality**: ${{ needs.code-quality.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **☁️ Azure Deploy**: ${{ needs.deploy-azure.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
 
-        if [[ "${{ needs.deploy-local-machine.result }}" == "success" ]]; then
-          echo "## ✅ Success! Application Deployed Locally" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ needs.deploy-azure.result }}" == "success" ]]; then
+          echo "## ✅ Success! Application Deployed to Azure" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🏠 Access Your Application" >> $GITHUB_STEP_SUMMARY
-          echo "- Frontend: http://localhost" >> $GITHUB_STEP_SUMMARY
-          echo "- Backend API: http://localhost:8000" >> $GITHUB_STEP_SUMMARY
-          echo "- MongoDB: localhost:27017" >> $GITHUB_STEP_SUMMARY
+          echo "### ☁️ Live Application URLs" >> $GITHUB_STEP_SUMMARY
+          echo "Your application is now live on Azure Container Apps!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🎉 **Application is running locally with Docker Compose!**" >> $GITHUB_STEP_SUMMARY
-        elif [[ "${{ needs.deploy-local-machine.result }}" == "failure" ]]; then
-          echo "## ❌ Deployment Failed" >> $GITHUB_STEP_SUMMARY
-          echo "Please check the job logs for details." >> $GITHUB_STEP_SUMMARY
+          echo "🎉 **Application is running on Azure Container Apps!**" >> $GITHUB_STEP_SUMMARY
+        elif [[ "${{ needs.deploy-azure.result }}" == "failure" ]]; then
+          echo "## ❌ Azure Deployment Failed" >> $GITHUB_STEP_SUMMARY
+          echo "Please check the Azure deployment job logs for details." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔄 To Re-run Failed Jobs Only:" >> $GITHUB_STEP_SUMMARY
           echo "1. Go to Actions tab" >> $GITHUB_STEP_SUMMARY

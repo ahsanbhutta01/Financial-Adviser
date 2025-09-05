@@ -3,6 +3,7 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
+    image: hassan915/financial-adviser-client:latest
     container_name: client
     ports:
       - "5173:80"
@@ -16,6 +17,7 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
+    image: hassan915/financial-adviser-server:latest
     container_name: server
     ports:
       - "8000:8000"
