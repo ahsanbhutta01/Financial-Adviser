@@ -192,6 +192,7 @@ jobs:
         az containerapp update \
           --name financial-adviser-server \
           --resource-group rg-financial-adviser \
+          --container-name financial-adviser-server \
           --set-env-vars \
             CALLBACK_URL="https://$BACKEND_URL/api/user/google/callback" \
             FRONTEND_URL="https://$FRONTEND_URL"
