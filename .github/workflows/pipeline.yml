@@ -115,24 +115,9 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: 🗃️ Deploy MongoDB Container
+    - name: � Deploy Backend with MongoDB Sidecar
       run: |
-        az containerapp create \
-          --name mongodb \
-          --resource-group rg-financial-adviser \
-          --environment financial-adviser \
-          --image mongo:latest \
-          --target-port 27017 \
-          --ingress internal \
-          --min-replicas 1 \
-          --max-replicas 1 \
-          --cpu 0.5 \
-          --memory 1Gi \
-          --env-vars MONGO_INITDB_DATABASE=financial_advisor \
-          --revision-suffix $(date +%s) || echo "MongoDB already exists, updating..."
-
-    - name: 🔧 Deploy Backend Container
-      run: |
+        # Deploy backend with MongoDB sidecar using direct CLI commands (no temp files)
         az containerapp create \
           --name financial-adviser-server \
           --resource-group rg-financial-adviser \
@@ -145,20 +130,24 @@ jobs:
           --cpu 0.5 \
           --memory 1Gi \
           --env-vars \
-            MONGO_URI="mongodb://mongodb:27017/financial_advisor" \
+            MONGO_URI="mongodb://localhost:27017/financial-adviser" \
             PORT=8000 \
             SECRET_KEY="${{ secrets.SECRET_KEY }}" \
             GEMINI_API="${{ secrets.GEMINI_API }}" \
             OPEN_ROUTER_API="${{ secrets.OPEN_ROUTER_API }}" \
             GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
             GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
-            SESSION_SECRET="${{ secrets.SESSION_SECRET }}" \
-          --revision-suffix $(date +%s) || \
+            SESSION_SECRET="${{ secrets.SESSION_SECRET }}" || echo "Backend already exists, will update..."
+        
+        # Add MongoDB sidecar container (or update if exists)
         az containerapp update \
           --name financial-adviser-server \
           --resource-group rg-financial-adviser \
-          --image ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }} \
-          --revision-suffix $(date +%s)
+          --container-name mongodb-sidecar \
+          --image mongo:latest \
+          --cpu 0.5 \
+          --memory 1Gi \
+          --set-env-vars MONGO_INITDB_DATABASE="financial-adviser"
 
     - name: 🌐 Get Backend URL and Update Frontend Config
       id: backend-url
@@ -187,26 +176,18 @@ jobs:
           --image ${{ env.IMAGE_NAME_CLIENT }}:${{ github.ref_name }} \
           --revision-suffix $(date +%s)
 
-    - name: 🔄 Update Backend with Frontend URL
+    - name: 🔄 Update Backend URLs
       run: |
         FRONTEND_URL=$(az containerapp show --name financial-adviser-client --resource-group rg-financial-adviser --query properties.configuration.ingress.fqdn --output tsv)
-        BACKEND_URL="${{ steps.backend-url.outputs.BACKEND_URL }}"
+        BACKEND_URL=$(az containerapp show --name financial-adviser-server --resource-group rg-financial-adviser --query properties.configuration.ingress.fqdn --output tsv)
         
+        # Update backend with proper callback and frontend URLs
         az containerapp update \
           --name financial-adviser-server \
           --resource-group rg-financial-adviser \
           --set-env-vars \
-            MONGO_URI="mongodb://mongodb:27017/financial_advisor" \
-            PORT=8000 \
-            SECRET_KEY="${{ secrets.SECRET_KEY }}" \
-            GEMINI_API="${{ secrets.GEMINI_API }}" \
-            OPEN_ROUTER_API="${{ secrets.OPEN_ROUTER_API }}" \
-            GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
-            GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
-            CALLBACK_URL="${BACKEND_URL}/api/user/google/callback" \
-            FRONTEND_URL="https://$FRONTEND_URL" \
-            SESSION_SECRET="${{ secrets.SESSION_SECRET }}" \
-          --revision-suffix $(date +%s)
+            CALLBACK_URL="https://$BACKEND_URL/api/user/google/callback" \
+            FRONTEND_URL="https://$FRONTEND_URL"
 
     - name: ✅ Azure Deployment Summary
       run: |
@@ -217,14 +198,14 @@ jobs:
         
         echo "📱 Frontend URL: https://$FRONTEND_URL"
         echo "🔧 Backend URL: https://$BACKEND_URL"
-        echo "🗃️ MongoDB: Internal (mongodb:27017)"
+        echo "🗃️ MongoDB: Sidecar container (localhost:27017)"
         
         echo "## ☁️ Azure Deployment Successful!" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🌐 Live Application URLs" >> $GITHUB_STEP_SUMMARY
         echo "- **Frontend**: https://$FRONTEND_URL" >> $GITHUB_STEP_SUMMARY
         echo "- **Backend API**: https://$BACKEND_URL" >> $GITHUB_STEP_SUMMARY
-        echo "- **MongoDB**: Internal container (mongodb:27017)" >> $GITHUB_STEP_SUMMARY
+        echo "- **MongoDB**: Sidecar container (localhost:27017)" >> $GITHUB_STEP_SUMMARY
 
   # =============================================================================
   # JOB 3: PIPELINE SUMMARY
