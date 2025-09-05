@@ -117,12 +117,16 @@ jobs:
 
     - name: � Deploy Backend with MongoDB Sidecar
       run: |
+        # Delete existing backend container if it exists to ensure clean deployment
+        az containerapp delete --name financial-adviser-server --resource-group rg-financial-adviser --yes || echo "Backend container doesn't exist"
+        
         # Deploy backend with MongoDB sidecar using direct CLI commands (no temp files)
         az containerapp create \
           --name financial-adviser-server \
           --resource-group rg-financial-adviser \
           --environment financial-adviser \
           --image ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }} \
+          --container-name backend \
           --target-port 8000 \
           --ingress external \
           --min-replicas 1 \
@@ -130,24 +134,24 @@ jobs:
           --cpu 0.5 \
           --memory 1Gi \
           --env-vars \
-            MONGO_URI="mongodb://localhost:27017/financial-adviser" \
+            MONGO_URI="mongodb://mongodb-sidecar:27017/financial-adviser" \
             PORT=8000 \
             SECRET_KEY="${{ secrets.SECRET_KEY }}" \
             GEMINI_API="${{ secrets.GEMINI_API }}" \
             OPEN_ROUTER_API="${{ secrets.OPEN_ROUTER_API }}" \
             GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
             GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
-            SESSION_SECRET="${{ secrets.SESSION_SECRET }}" || echo "Backend already exists, will update..."
+            SESSION_SECRET="${{ secrets.SESSION_SECRET }}"
         
-        # Add MongoDB sidecar container (or update if exists)
-        az containerapp update \
+        # Add MongoDB sidecar container
+        az containerapp container add \
           --name financial-adviser-server \
           --resource-group rg-financial-adviser \
           --container-name mongodb-sidecar \
           --image mongo:latest \
           --cpu 0.5 \
           --memory 1Gi \
-          --set-env-vars MONGO_INITDB_DATABASE="financial-adviser"
+          --env-vars MONGO_INITDB_DATABASE="financial-adviser"
 
     - name: 🌐 Get Backend URL and Update Frontend Config
       id: backend-url
