@@ -1,14 +1,14 @@
+apiVersion: 2023-05-01
+type: Microsoft.App/containerApps
 properties:
   managedEnvironmentId: /subscriptions/SUBSCRIPTION_ID_PLACEHOLDER/resourceGroups/rg-financial-adviser/providers/Microsoft.App/managedEnvironments/financial-adviser
   configuration:
     ingress:
       external: true
       targetPort: 8000
-      transport: auto
       traffic:
       - weight: 100
         latestRevision: true
-    activeRevisionsMode: Single
   template:
     containers:
     - name: backend
