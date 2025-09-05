@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 export const apiSlice = createApi({
    reducerPath: 'api',
    baseQuery: fetchBaseQuery({
-      baseUrl: 'http://localhost:8000/api',
+      baseUrl: import.meta.env.VITE_API_URL || 'https://financial-adviser-server.mangoplant-b605810d.southeastasia.azurecontainerapps.io/api',
       credentials: "include"
    }),
    tagTypes: ["User", "Prompt"], // Added "Prompt" tag type
