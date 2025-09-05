@@ -24,7 +24,11 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
    cors({
-      origin: ['http://localhost:5173'],
+      origin: [
+         'http://localhost:5173',
+         'https://financial-adviser-client.mangoplant-b605810d.southeastasia.azurecontainerapps.io',
+         process.env.FRONTEND_URL
+      ],
       credentials: true,
    })
 );
