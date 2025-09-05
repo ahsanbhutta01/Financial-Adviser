@@ -1,5 +1,3 @@
-apiVersion: 2023-05-01
-type: Microsoft.App/containerApps
 properties:
   managedEnvironmentId: /subscriptions/SUBSCRIPTION_ID_PLACEHOLDER/resourceGroups/rg-financial-adviser/providers/Microsoft.App/managedEnvironments/financial-adviser
   configuration:
