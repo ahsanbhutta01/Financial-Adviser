@@ -120,38 +120,72 @@ jobs:
         # Delete existing backend container if it exists to ensure clean deployment
         az containerapp delete --name financial-adviser-server --resource-group rg-financial-adviser --yes || echo "Backend container doesn't exist"
         
-        # Deploy backend with MongoDB sidecar using direct CLI commands (no temp files)
+        # Set variables for YAML template
+        SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+        SERVER_IMAGE="${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }}"
+        SECRET_KEY_VAL="${{ secrets.SECRET_KEY }}"
+        GEMINI_API_VAL="${{ secrets.GEMINI_API }}"
+        OPEN_ROUTER_API_VAL="${{ secrets.OPEN_ROUTER_API }}"
+        GOOGLE_CLIENT_ID_VAL="${{ secrets.GOOGLE_CLIENT_ID }}"
+        GOOGLE_CLIENT_SECRET_VAL="${{ secrets.GOOGLE_CLIENT_SECRET }}"
+        SESSION_SECRET_VAL="${{ secrets.SESSION_SECRET }}"
+        
+        # Create YAML configuration for backend with MongoDB sidecar
+        cat > backend-sidecar.yaml << EOF
+        properties:
+          managedEnvironmentId: /subscriptions/${SUBSCRIPTION_ID}/resourceGroups/rg-financial-adviser/providers/Microsoft.App/managedEnvironments/financial-adviser
+          configuration:
+            ingress:
+              external: true
+              targetPort: 8000
+              transport: auto
+              traffic:
+              - weight: 100
+                latestRevision: true
+            secrets: []
+            activeRevisionsMode: Single
+          template:
+            containers:
+            - name: backend
+              image: ${SERVER_IMAGE}
+              env:
+              - name: MONGO_URI
+                value: "mongodb://mongodb-sidecar:27017/financial-adviser"
+              - name: PORT
+                value: "8000"
+              - name: SECRET_KEY
+                value: "${SECRET_KEY_VAL}"
+              - name: GEMINI_API
+                value: "${GEMINI_API_VAL}"
+              - name: OPEN_ROUTER_API
+                value: "${OPEN_ROUTER_API_VAL}"
+              - name: GOOGLE_CLIENT_ID
+                value: "${GOOGLE_CLIENT_ID_VAL}"
+              - name: GOOGLE_CLIENT_SECRET
+                value: "${GOOGLE_CLIENT_SECRET_VAL}"
+              - name: SESSION_SECRET
+                value: "${SESSION_SECRET_VAL}"
+              resources:
+                cpu: 0.5
+                memory: 1Gi
+            - name: mongodb-sidecar
+              image: mongo:latest
+              env:
+              - name: MONGO_INITDB_DATABASE
+                value: "financial-adviser"
+              resources:
+                cpu: 0.5
+                memory: 1Gi
+            scale:
+              minReplicas: 1
+              maxReplicas: 2
+        EOF
+        
+        # Deploy using YAML template
         az containerapp create \
           --name financial-adviser-server \
           --resource-group rg-financial-adviser \
-          --environment financial-adviser \
-          --image ${{ env.IMAGE_NAME_SERVER }}:${{ github.ref_name }} \
-          --container-name backend \
-          --target-port 8000 \
-          --ingress external \
-          --min-replicas 1 \
-          --max-replicas 2 \
-          --cpu 0.5 \
-          --memory 1Gi \
-          --env-vars \
-            MONGO_URI="mongodb://mongodb-sidecar:27017/financial-adviser" \
-            PORT=8000 \
-            SECRET_KEY="${{ secrets.SECRET_KEY }}" \
-            GEMINI_API="${{ secrets.GEMINI_API }}" \
-            OPEN_ROUTER_API="${{ secrets.OPEN_ROUTER_API }}" \
-            GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
-            GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
-            SESSION_SECRET="${{ secrets.SESSION_SECRET }}"
-        
-        # Add MongoDB sidecar container
-        az containerapp container add \
-          --name financial-adviser-server \
-          --resource-group rg-financial-adviser \
-          --container-name mongodb-sidecar \
-          --image mongo:latest \
-          --cpu 0.5 \
-          --memory 1Gi \
-          --env-vars MONGO_INITDB_DATABASE="financial-adviser"
+          --yaml backend-sidecar.yaml
 
     - name: 🌐 Get Backend URL and Update Frontend Config
       id: backend-url
@@ -202,14 +236,14 @@ jobs:
         
         echo "📱 Frontend URL: https://$FRONTEND_URL"
         echo "🔧 Backend URL: https://$BACKEND_URL"
-        echo "🗃️ MongoDB: Sidecar container (localhost:27017)"
+        echo "🗃️ MongoDB: Sidecar container (mongodb-sidecar:27017)"
         
         echo "## ☁️ Azure Deployment Successful!" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🌐 Live Application URLs" >> $GITHUB_STEP_SUMMARY
         echo "- **Frontend**: https://$FRONTEND_URL" >> $GITHUB_STEP_SUMMARY
         echo "- **Backend API**: https://$BACKEND_URL" >> $GITHUB_STEP_SUMMARY
-        echo "- **MongoDB**: Sidecar container (localhost:27017)" >> $GITHUB_STEP_SUMMARY
+        echo "- **MongoDB**: Sidecar container (mongodb-sidecar:27017)" >> $GITHUB_STEP_SUMMARY
 
   # =============================================================================
   # JOB 3: PIPELINE SUMMARY
