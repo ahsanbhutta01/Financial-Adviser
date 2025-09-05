@@ -33,13 +33,6 @@ properties:
       resources:
         cpu: 0.5
         memory: 1Gi
-      probes:
-      - type: readiness
-        httpGet:
-          path: "/api/health"
-          port: 8000
-        initialDelaySeconds: 30
-        periodSeconds: 10
     - name: mongodb-sidecar
       image: mongo:7.0
       env:
@@ -52,15 +45,6 @@ properties:
       resources:
         cpu: 0.5
         memory: 1Gi
-      probes:
-      - type: readiness
-        exec:
-          command:
-          - mongosh
-          - --eval
-          - "db.adminCommand('ping')"
-        initialDelaySeconds: 15
-        periodSeconds: 10
     scale:
       minReplicas: 1
       maxReplicas: 2
