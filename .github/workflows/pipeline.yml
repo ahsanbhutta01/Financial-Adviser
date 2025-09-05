@@ -133,7 +133,7 @@ jobs:
           --cpu 0.5 \
           --memory 1Gi \
           --env-vars \
-            MONGO_URI="mongodb://admin:${{ secrets.MONGO_ROOT_PASSWORD || 'MongoSecure123' }}@localhost:27017/financial-adviser?authSource=admin" \
+            MONGO_URI="mongodb://admin:MongoSecure123@localhost:27017/financial-adviser?authSource=admin" \
             PORT="8000" \
             SECRET_KEY="${{ secrets.SECRET_KEY }}" \
             GEMINI_API="${{ secrets.GEMINI_API }}" \
@@ -154,7 +154,7 @@ jobs:
           --set-env-vars \
             MONGO_INITDB_DATABASE="financial-adviser" \
             MONGO_INITDB_ROOT_USERNAME="admin" \
-            MONGO_INITDB_ROOT_PASSWORD="${{ secrets.MONGO_ROOT_PASSWORD || 'MongoSecure123' }}"
+            MONGO_INITDB_ROOT_PASSWORD="MongoSecure123"
 
     - name: 🌐 Get Backend URL and Update Frontend Config
       id: backend-url
