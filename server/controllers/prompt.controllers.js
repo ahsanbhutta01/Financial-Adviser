@@ -299,7 +299,7 @@ CRITICAL INSTRUCTION: You MUST respond ONLY with a valid JSON object. Do NOT inc
     const titleResp = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "mistralai/mistral-small-3.2-24b-instruct:free",
+        model: "deepseek/deepseek-chat-v3.1:free",
         messages: [
           {
             role: "system",
