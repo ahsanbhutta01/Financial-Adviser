@@ -50,7 +50,7 @@ async function giveAdvice(req, res) {
       //deepseek/deepseek-chat-v3-0324:free
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "deepseek/deepseek-chat-v3.1:free",
+        model: "openrouter/sonoma-dusk-alpha", //"deepseek/deepseek-chat-v3.1:free",
         messages: [
           {
             role: "system",
