@@ -28,6 +28,8 @@ properties:
         value: "GOOGLE_CLIENT_SECRET_PLACEHOLDER"
       - name: SESSION_SECRET
         value: "SESSION_SECRET_PLACEHOLDER"
+      - name: GROQ_API_KEY
+        value: "GROQ_API_KEY_PLACEHOLDER"
       resources:
         cpu: 0.5
         memory: 1Gi
