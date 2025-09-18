@@ -6,6 +6,10 @@ import { validateAndTransformResponse } from "../utils/validateAndTransformRespo
 import dotenv from 'dotenv'
 dotenv.config()
 
+
+import { Groq } from 'groq-sdk'
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
 function cleanTitle(rawTitle) {
   const cleanedTitle = slugify(rawTitle, {
     remove: /[^\w\s]/g,
@@ -20,6 +24,27 @@ function cleanTitle(rawTitle) {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ")
 }
+
+function reduceCoinGeckoData(data) {
+  return data.map(coin => ({
+    id: coin.id,
+    symbol: coin.symbol,
+    name: coin.name,
+    market_cap_rank: coin.market_cap_rank,
+    current_price: coin.current_price,
+    market_cap: coin.market_cap,
+    total_volume: coin.total_volume,
+    high_24h: coin.high_24h,
+    low_24h: coin.low_24h,
+    circulating_supply: coin.circulating_supply,
+    max_supply: coin.max_supply,
+    price_change_1h: coin.price_change_percentage_1h_in_currency,
+    price_change_24h: coin.price_change_percentage_24h_in_currency,
+    price_change_7d: coin.price_change_percentage_7d_in_currency,
+  }));
+}
+
+
 
 async function giveAdvice(req, res) {
   try {
@@ -43,56 +68,106 @@ async function giveAdvice(req, res) {
         price_change_percentage: "1h,24h,7d",
       },
     })
-    const coinGeckoData = response.data // raw market data
+    const coinGeckoData = reduceCoinGeckoData(response.data) // raw market data
+    
 
     // 2. Enhanced market analysis prompt
-    const summaryResp = await axios.post(
-      //deepseek/deepseek-chat-v3-0324:free
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        model: "openrouter/sonoma-dusk-alpha", //"deepseek/deepseek-chat-v3.1:free",
-        messages: [
-          {
-            role: "system",
-            content: `You are a professional cryptocurrency market analyst with expertise in technical analysis, fundamental analysis, and market sentiment. 
-            Your analysis is data-driven, balanced, and considers multiple factors including price action, volume, market trends, and on-chain metrics.`,
-          },
-          {
-            role: "user",
-            content: `
-            Analyze the following cryptocurrency market data and provide a comprehensive market assessment: ${JSON.stringify(coinGeckoData)}
 
-            Please include:
+    // const summaryResp = await axios.post(
+    //   //deepseek/deepseek-chat-v3-0324:free
+    //   "https://openrouter.ai/api/v1/chat/completions",
+    //   {
+    //     model: "openrouter/sonoma-dusk-alpha", //"deepseek/deepseek-chat-v3.1:free",
+    //     messages: [
+    //       {
+    //         role: "system",
+    //         content: `You are a professional cryptocurrency market analyst with expertise in technical analysis, fundamental analysis, and market sentiment. 
+    //         Your analysis is data-driven, balanced, and considers multiple factors including price action, volume, market trends, and on-chain metrics.`,
+    //       },
+    //       {
+    //         role: "user",
+    //         content: `
+    //         Analyze the following cryptocurrency market data and provide a comprehensive market assessment: ${JSON.stringify(coinGeckoData)}
 
-            1. **Market Overview**: Analyze the overall cryptocurrency market direction, key support/resistance levels, and general sentiment.
-            
-            2. **Top Performers Analysis**: Identify cryptocurrencies showing strong momentum and analyze the reasons behind their performance.
-            
-            3. **Underperformers Analysis**: Identify cryptocurrencies that are underperforming and analyze potential reasons.
-            
-            4. **Volume Analysis**: Analyze trading volumes and what they indicate about market interest and potential price movements.
-            
-            5. **Market Sentiment**: Determine if the overall market sentiment is bullish, bearish, or neutral with clear reasoning.
-            
-            6. **Key Levels to Watch**: Identify important price levels for major cryptocurrencies that could act as support or resistance.
-            
-            7. **Risk Assessment**: Evaluate the current market risk level (low, medium, high) with justification.
+    //         Please include:
 
-            Format your response in clear sections with concise, actionable insights suitable for both new and experienced cryptocurrency investors.
-            `,
-          },
-        ],
-        max_tokens: 1500,
-        temperature:0.3
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.OPEN_ROUTER_API}`,
-          "Content-Type": "application/json",
+    //         1. **Market Overview**: Analyze the overall cryptocurrency market direction, key support/resistance levels, and general sentiment.
+
+    //         2. **Top Performers Analysis**: Identify cryptocurrencies showing strong momentum and analyze the reasons behind their performance.
+
+    //         3. **Underperformers Analysis**: Identify cryptocurrencies that are underperforming and analyze potential reasons.
+
+    //         4. **Volume Analysis**: Analyze trading volumes and what they indicate about market interest and potential price movements.
+
+    //         5. **Market Sentiment**: Determine if the overall market sentiment is bullish, bearish, or neutral with clear reasoning.
+
+    //         6. **Key Levels to Watch**: Identify important price levels for major cryptocurrencies that could act as support or resistance.
+
+    //         7. **Risk Assessment**: Evaluate the current market risk level (low, medium, high) with justification.
+
+    //         Format your response in clear sections with concise, actionable insights suitable for both new and experienced cryptocurrency investors.
+    //         `,
+    //       },
+    //     ],
+    //     max_tokens: 1500,
+    //     temperature: 0.3
+    //   },
+    //   {
+    //     headers: {
+    //       Authorization: `Bearer ${process.env.OPEN_ROUTER_API}`,
+    //       "Content-Type": "application/json",
+    //     },
+    //   },
+    // )
+    // const marketSummary = summaryResp.data.choices[0].message.content
+
+
+
+    const summaryResp = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",  // similar to openrouter model
+      temperature: 0.3,
+      max_completion_tokens: 2500,
+      stream: true,
+      messages: [
+        {
+          role: "system",
+          content: `You are a professional cryptocurrency market analyst with expertise in technical analysis, fundamental analysis, and market sentiment. 
+      Your analysis is data-driven, balanced, and considers multiple factors including price action, volume, market trends, and on-chain metrics.`
         },
-      },
-    )
-    const marketSummary = summaryResp.data.choices[0].message.content
+        {
+          role: "user",
+          content: `
+      Analyze the following cryptocurrency market data and provide a comprehensive market assessment: ${JSON.stringify(coinGeckoData)}
+
+      Please include:
+
+      1. **Market Overview**: Analyze the overall cryptocurrency market direction, key support/resistance levels, and general sentiment.
+      
+      2. **Top Performers Analysis**: Identify cryptocurrencies showing strong momentum and analyze the reasons behind their performance.
+      
+      3. **Underperformers Analysis**: Identify cryptocurrencies that are underperforming and analyze potential reasons.
+      
+      4. **Volume Analysis**: Analyze trading volumes and what they indicate about market interest and potential price movements.
+      
+      5. **Market Sentiment**: Determine if the overall market sentiment is bullish, bearish, or neutral with clear reasoning.
+      
+      6. **Key Levels to Watch**: Identify important price levels for major cryptocurrencies that could act as support or resistance.
+      
+      7. **Risk Assessment**: Evaluate the current market risk level (low, medium, high) with justification.
+
+      Format your response in clear sections with concise, actionable insights suitable for both new and experienced cryptocurrency investors.
+      `
+        }
+      ]
+    });
+
+    let marketSummary = "";
+    for await (const chunk of summaryResp) {
+      const token = chunk.choices[0]?.delta?.content || '';
+      marketSummary += token;
+    }
+
+
 
     // 3. Create trade-type specific instructions
     let tradeSpecificInstructions = ""
@@ -299,7 +374,7 @@ CRITICAL INSTRUCTION: You MUST respond ONLY with a valid JSON object. Do NOT inc
     const titleResp = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "deepseek/deepseek-chat-v3.1:free",
+        model: "openrouter/sonoma-dusk-alpha",
         messages: [
           {
             role: "system",
@@ -724,210 +799,80 @@ async function generateCryptoPrompt(req, res) {
 
     // Create the enhanced comprehensive prompt
     const comprehensivePrompt = `
-# PROFESSIONAL CRYPTOCURRENCY INVESTMENT ANALYSIS & STRATEGY
+# PROFESSIONAL CRYPTOCURRENCY INVESTMENT STRATEGY
 
-## 🎯 MISSION STATEMENT
-You are a seasoned cryptocurrency portfolio manager with 10+ years of experience in digital assets, technical analysis, and risk management. Provide a detailed, actionable investment strategy based on real-time market data and sophisticated analysis techniques.
+## 📊 Market Context (${currentDate} - ${currentTime})
+- Source: CoinGecko API
+- Market Session: ${new Date().getUTCHours() >= 13 && new Date().getUTCHours() <= 21 ? 'US Hours' : 'Asian/European Hours'}
+- Market Cap: $${(marketAnalysis.totalMarketCap / 1e12).toFixed(2)}T
+- Sentiment: ${marketAnalysis.marketSentiment}
+- Avg 24h Change: ${marketAnalysis.averageChange24h.toFixed(2)}% (${Math.abs(marketAnalysis.averageChange24h) > 5 ? 'High' : Math.abs(marketAnalysis.averageChange24h) > 2 ? 'Medium' : 'Low'} Volatility)
 
-## 📊 MARKET CONTEXT & TIMESTAMP
-- **Analysis Date**: ${currentDate}
-- **Analysis Time**: ${currentTime} (Local Time)
-- **Data Source**: CoinGecko API (Real-time Market Data)
-- **Market Session**: ${new Date().getUTCHours() >= 13 && new Date().getUTCHours() <= 21 ? 'US Trading Hours' : 'Asian/European Trading Hours'}
+## 👤 Investor Profile
+- Capital: $${investment}
+- Risk Tolerance: ${risk}% per trade
+- Trading Style: ${tradeType}
+- Horizon: ${tradeType.toLowerCase() === 'future' ? '1d–4w (Futures)' : '1w–6m (Spot)'}
 
-## 👤 INVESTOR PROFILE & CONSTRAINTS
-- **Available Capital**: $${investment} USD
-- **Risk Tolerance**: Maximum ${risk}% loss per individual position
-- **Trading Style**: ${tradeType.charAt(0).toUpperCase() + tradeType.slice(1).toLowerCase()} Trading
-- **Experience Level**: Intermediate (understands basic concepts, needs advanced guidance)
-- **Investment Horizon**: ${tradeType.toLowerCase() === 'future' ? 'Short to Medium-term (1 day - 4 weeks)' : 'Medium to Long-term (1 week - 6 months)'}
-- **Portfolio Approach**: Diversified allocation across market cap categories
+## 🚀 Market Highlights (24h)
+**Top Gainers**
+${marketAnalysis.topGainers.slice(0, 5).map((c,i)=>`${i+1}. ${c.name} (${c.symbol.toUpperCase()}) +${c.price_change_percentage_24h.toFixed(2)}% @ $${c.current_price}`).join("\n")}
 
-## 📈 REAL-TIME MARKET INTELLIGENCE
+**Top Losers**
+${marketAnalysis.topLosers.slice(0, 5).map((c,i)=>`${i+1}. ${c.name} (${c.symbol.toUpperCase()}) ${c.price_change_percentage_24h.toFixed(2)}% @ $${c.current_price}`).join("\n")}
 
-### Global Market Overview
-- **Total Cryptocurrency Market Cap**: $${(marketAnalysis.totalMarketCap / 1e12).toFixed(2)} Trillion
-- **Market Sentiment Index**: ${marketAnalysis.marketSentiment} (${marketAnalysis.averageChange24h > 5 ? 'Extremely Bullish' : marketAnalysis.averageChange24h > 2 ? 'Bullish' : marketAnalysis.averageChange24h > -2 ? 'Neutral' : marketAnalysis.averageChange24h > -5 ? 'Bearish' : 'Extremely Bearish'})
-- **24h Average Price Change**: ${marketAnalysis.averageChange24h.toFixed(2)}%
-- **Market Volatility Level**: ${Math.abs(marketAnalysis.averageChange24h) > 5 ? 'High' : Math.abs(marketAnalysis.averageChange24h) > 2 ? 'Medium' : 'Low'}
+**High Liquidity Assets**
+${marketAnalysis.highVolumeCoins.slice(0, 5).map((c,i)=>`${i+1}. ${c.name} (${c.symbol.toUpperCase()}) Vol $${(c.total_volume/1e9).toFixed(2)}B, MCap $${(c.market_cap/1e9).toFixed(2)}B`).join("\n")}
 
-### 🚀 TOP MOMENTUM GAINERS (24h Performance)
-${marketAnalysis.topGainers
-  .map(
-    (coin, index) =>
-      `${index + 1}. **${coin.name}** (${coin.symbol.toUpperCase()})
-   📈 +${coin.price_change_percentage_24h.toFixed(2)}% | 💰 $${coin.current_price.toLocaleString()} | 📊 Volume: $${(coin.total_volume / 1e6).toFixed(1)}M
-   🏆 Market Cap: $${(coin.market_cap / 1e9).toFixed(2)}B | 🔄 Market Cap Rank: #${coin.market_cap_rank}`,
-  )
-  .join("\n\n")}
-
-### 📉 SIGNIFICANT DECLINERS (24h Performance)
-${marketAnalysis.topLosers
-  .map(
-    (coin, index) =>
-      `${index + 1}. **${coin.name}** (${coin.symbol.toUpperCase()})
-   📉 ${coin.price_change_percentage_24h.toFixed(2)}% | 💰 $${coin.current_price.toLocaleString()} | 📊 Volume: $${(coin.total_volume / 1e6).toFixed(1)}M
-   🏆 Market Cap: $${(coin.market_cap / 1e9).toFixed(2)}B | 🔄 Market Cap Rank: #${coin.market_cap_rank}`,
-  )
-  .join("\n\n")}
-
-### 🌊 LIQUIDITY LEADERS (High Volume Assets)
-${marketAnalysis.highVolumeCoins
-  .map(
-    (coin, index) =>
-      `${index + 1}. **${coin.name}** (${coin.symbol.toUpperCase()})
-   💧 24h Volume: $${(coin.total_volume / 1e9).toFixed(2)}B | 💰 Price: $${coin.current_price.toLocaleString()} 
-   📊 24h Change: ${coin.price_change_percentage_24h.toFixed(2)}% | 🏆 Market Cap: $${(coin.market_cap / 1e9).toFixed(2)}B`,
-  )
-  .join("\n\n")}
-
-## 📋 COMPLETE MARKET DATA SNAPSHOT
+## 📋 Market Snapshot
 \`\`\`json
-${JSON.stringify(coinGeckoData.slice(0, 30), null, 2)}
+${JSON.stringify(coinGeckoData.slice(0, 10), null, 2)}
 \`\`\`
 
 ${tradeSpecificSection}
 
-## 🎯 COMPREHENSIVE ANALYSIS FRAMEWORK
+## 🎯 Strategy Framework
+1. **Market Analysis**  
+   - Macro cycle & trend outlook  
+   - Key support/resistance zones  
+   - Momentum indicators (RSI, MACD, Stochastic)  
+   - Sentiment (Fear & Greed, social, volume profile)  
+   - Correlations & major catalysts  
 
-### 1. 🔍 MULTI-DIMENSIONAL MARKET ANALYSIS
-**Required Deep Dive Analysis:**
-- **Macro Trend Analysis**: Identify primary, secondary, and tertiary trends across different timeframes
-- **Market Structure Analysis**: Support/resistance levels, trend lines, and chart patterns
-- **Volume Profile Assessment**: Volume at price levels, buying/selling pressure zones
-- **Momentum Indicators**: RSI, MACD, Stochastic, Williams %R analysis
-- **Market Sentiment Indicators**: Fear & Greed Index implications, social sentiment
-- **Liquidity Analysis**: Bid-ask spreads, order book depth, slippage considerations
-- **Correlation Analysis**: Inter-asset correlations and portfolio diversification benefits
-- **News & Fundamental Catalyst Assessment**: Recent developments affecting price action
+2. **Portfolio Construction**  
+   - Core (60–70%): BTC, ETH, other large caps  
+   - Growth (20–30%): Mid-caps with strong narratives  
+   - Speculative (5–10%): High-risk, small-cap plays  
+   - Diversify across DeFi, L1/L2, AI, Web3 sectors  
 
-### 2. 💼 STRATEGIC PORTFOLIO CONSTRUCTION
-**Create a sophisticated allocation strategy that includes:**
-- **Core Holdings (60-70%)**: Established, high market cap cryptocurrencies (BTC, ETH)
-- **Growth Positions (20-30%)**: Mid-cap assets with strong fundamentals and growth potential
-- **Speculative Positions (5-15%)**: Small-cap, high-risk/high-reward opportunities
-- **Sector Diversification**: DeFi, Layer 1, Layer 2, Web3, Gaming, AI, etc.
-- **Geographic Considerations**: Regulatory environments and regional adoption
-- **Specific USD Allocation**: Exact dollar amounts for each recommended position
-- **Rebalancing Triggers**: When and how to adjust allocations
+3. **Technical Analysis**  
+   - Multi-timeframe (1H, 4H, 1D, 1W)  
+   - Support/resistance & moving averages  
+   - Patterns (triangles, flags, H&S)  
+   - Volume trends & volatility (Bollinger, ATR)  
 
-### 3. 📊 ADVANCED TECHNICAL ANALYSIS FRAMEWORK
-**For each recommended cryptocurrency, provide:**
-- **Multi-Timeframe Analysis**: 1H, 4H, 1D, 1W chart analysis
-- **Key Technical Levels**: 
-  - Primary Support/Resistance zones
-  - Fibonacci retracement levels
-  - Moving average clusters (20, 50, 100, 200 MA)
-  - Volume-weighted average price (VWAP)
-- **Chart Pattern Recognition**: Triangles, flags, head & shoulders, double tops/bottoms
-- **Momentum Oscillators**: RSI divergences, MACD crossovers, stochastic conditions
-- **Volume Analysis**: On-balance volume, accumulation/distribution patterns
-- **Volatility Indicators**: Bollinger Bands, Average True Range analysis
+4. **Risk Management**  
+   - Position sizing ≤ ${risk}% per trade  
+   - Stop-losses: % based + technical levels  
+   - Take-profits: staggered (25/50/75%)  
+   - Portfolio heat & correlation controls  
+   - Contingency plan for extreme events  
 
-### 4. ⚠️ SOPHISTICATED RISK MANAGEMENT PROTOCOL
-**Comprehensive risk framework including:**
-- **Position Sizing Mathematics**: Kelly Criterion or fixed fractional method
-- **Stop-Loss Strategy**: 
-  - Technical stop-losses (below key support levels)
-  - Percentage-based stops (aligned with ${risk}% risk tolerance)
-  - Trailing stop methodology
-- **Take-Profit Strategy**: 
-  - Multiple profit-taking levels (25%, 50%, 75% position reduction)
-  - Risk-reward ratios for each trade (minimum 1:2 ratio)
-- **Portfolio Heat Management**: Maximum exposure limits per sector/market cap
-- **Correlation Risk Management**: Avoiding over-concentration in correlated assets
-- **Black Swan Protection**: Hedging strategies and position sizing for tail risk events
-- **Drawdown Management**: Maximum portfolio drawdown limits and recovery strategies
+5. **Execution Plan**  
+   - Optimal entry timing & scaling methods  
+   - Limit orders, DCA, scale-in/out  
+   - Exchange selection (fees/liquidity)  
+   - Monitoring cadence: daily, weekly, monthly  
 
-### 5. ⚡ PRECISION EXECUTION STRATEGY
-**Step-by-step implementation plan:**
-- **Market Timing Analysis**: Optimal entry windows based on market microstructure
-- **Order Management**: 
-  - Limit orders vs. market orders strategy
-  - Dollar-cost averaging schedules
-  - Scale-in and scale-out techniques
-- **Exchange Selection**: Liquidity, fees, and security considerations
-- **Tax Optimization**: FIFO/LIFO strategies and tax-loss harvesting opportunities
-- **Monitoring Framework**: 
-  - Daily, weekly, and monthly review schedules
-  - Key performance indicators (KPIs) tracking
-  - Portfolio rebalancing triggers
-
-## 📋 ENHANCED OUTPUT FORMAT REQUIREMENTS
-
-**Structure your comprehensive response as follows:**
-
-### 1. 🎯 EXECUTIVE SUMMARY (3-4 sentences)
-- Market outlook and key opportunities
-- Primary investment thesis
-- Expected risk-adjusted returns
-
-### 2. 🌍 MARKET OUTLOOK & MACRO ANALYSIS
-- Current market cycle phase
-- Key technical and fundamental drivers
-- Short-term (1-4 weeks) and medium-term (1-3 months) forecasts
-- Potential market catalysts and risk events
-
-### 3. 💎 RECOMMENDED PORTFOLIO ALLOCATIONS
-**For each recommended asset, provide:**
-- Asset name and ticker symbol
-- Allocation percentage and exact USD amount
-- Market cap category (Large/Mid/Small cap)
-- Investment thesis and fundamental rationale
-- Technical entry strategy and price levels
-- Expected time horizon for the position
-
-### 4. 📊 DETAILED TECHNICAL ANALYSIS
-**For each recommendation:**
-- Current technical setup and trend direction
-- Key support and resistance levels with specific prices
-- Technical indicators analysis (RSI, MACD, etc.)
-- Chart pattern identification
-- Volume profile assessment
-- Risk-reward ratio calculation
-
-### 5. 🛡️ COMPREHENSIVE RISK MANAGEMENT
-- Position sizing methodology with calculations
-- Stop-loss placement strategy with specific prices
-- Take-profit levels and partial exit strategy
-- Portfolio correlation analysis
-- Maximum drawdown projections
-- Contingency plans for different market scenarios
-
-### 6. ⏰ IMPLEMENTATION TIMELINE
-- **Week 1**: Initial positions and entry strategy
-- **Week 2-4**: Monitoring and potential adjustments
-- **Monthly**: Portfolio rebalancing schedule
-- **Quarterly**: Strategic review and allocation updates
-
-### 7. 📈 PERFORMANCE MONITORING CHECKLIST
-- Daily monitoring metrics
-- Weekly portfolio review items
-- Monthly performance evaluation criteria
-- Warning signals and exit triggers
-- Rebalancing thresholds and procedures
-
-## 🎓 ENHANCED GUIDANCE NOTES
-
-**CRITICAL SUCCESS FACTORS:**
-- ✅ Base ALL recommendations on the provided real-time market data
-- ✅ Provide specific, quantifiable advice with exact prices and percentages
-- ✅ Include realistic profit targets with probability assessments
-- ✅ Account for transaction costs, slippage, and tax implications
-- ✅ Consider market volatility and provide contingency scenarios
-- ✅ Ensure all recommendations align precisely with the ${risk}% risk tolerance
-- ✅ Include psychological aspects of trading and behavioral finance considerations
-- ✅ Provide educational context for all technical terms and strategies
-
-**DELIVERABLE QUALITY STANDARDS:**
-- Professional-grade analysis suitable for institutional investors
-- Actionable insights with clear implementation steps
-- Risk-adjusted return expectations with scenario analysis
-- Comprehensive coverage of all major risk factors
-- Clear reasoning and methodology behind every recommendation
-
-This analysis should serve as a complete investment blueprint that could be implemented by a professional trader or sophisticated retail investor, providing both strategic direction and tactical execution guidance based on current market conditions.
+## 📌 Output Deliverables
+- Executive Summary (market outlook + key plays)  
+- Market Outlook (macro & short-term)  
+- Portfolio Allocations (with USD amounts)  
+- Technical Setups (per asset)  
+- Risk & Execution Strategy  
+- Timeline & Monitoring Checklist  
 `
+
 
     // Generate a simple title without AI
     const promptTitle = `${marketAnalysis.marketSentiment} ${tradeType.charAt(0).toUpperCase() + tradeType.slice(1)} Strategy - $${investment}`
