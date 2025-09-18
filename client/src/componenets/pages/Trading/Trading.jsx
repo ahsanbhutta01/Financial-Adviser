@@ -110,9 +110,9 @@ const Trading = () => {
                {/* Setting dropdown */}
                {setting && (
                   <div className="absolute right-7 top-18 transition-all duration-300 bg-white w-46 text-center rounded-2xl">
-                     <p className="text-xl cursor-pointer w-46 hover:bg-gray-200 py-2.5 rounded-t-2xl transition-all duration-300">
+                     {/* <p className="text-xl cursor-pointer w-46 hover:bg-gray-200 py-2.5 rounded-t-2xl transition-all duration-300">
                         Setting
-                     </p>
+                     </p> */}
                      <div className="w-46 border-b border-b-[#9A9A9A]"></div>
                      <button
                         className="text-lg bg-[#645c5c] text-white py-1.5 px-6 text-center rounded-[63px] mt-2 mb-2 cursor-pointer hover:bg-black"
