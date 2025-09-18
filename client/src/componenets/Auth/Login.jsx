@@ -118,6 +118,7 @@ const Login = () => {
           ------------------ OR -------------------
         </h1>
         <button
+          type="button"
           className='flex items-center mx-auto border rounded-3xl py-1 px-4 md:px-7 md:py-2 md:w-[70%] gap-3 mt-4 cursor-pointer md:text-lg'
           onClick={() => window.location.href = `${import.meta.env.VITE_API_URL || 'https://financial-adviser-server.mangoplant-b605810d.southeastasia.azurecontainerapps.io/api'}/user/google`}
         >
