@@ -1,4 +1,4 @@
-name: CI/CD Pipeline - Build & Deploy to Azure ☁️
+name: CI/CD Pipeline - Build images & Deploy to Azure ☁️
 
 # =============================================================================
 # WHEN THIS PIPELINE RUNS
