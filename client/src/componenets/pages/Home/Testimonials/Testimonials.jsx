@@ -15,7 +15,7 @@ const Testimonials = () => {
             <div className=" container mx-auto font-[Lato] text-white text-center relative top-8 md:top-20">
                <h1 className='font-extrabold text-xl md:text-3xl'>Customer Testimonials</h1>
                <p className='text-xs md:text-lg'>
-                  What our users are saying about us
+                  What our users are saying about Us
                </p>
             </div>
 
