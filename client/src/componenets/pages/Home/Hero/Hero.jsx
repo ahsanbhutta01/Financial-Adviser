@@ -23,7 +23,7 @@ const Hero = () => {
                   </span>
                </p>
                <div className="flex mt-7 font-[Michorma] font-light text-4xl md:text-8xl">
-                  <h1 className='text-[#FFFFFF]'>FINNN</h1>&nbsp;
+                  <h1 className='text-[#FFFFFF]'>FINNNN</h1>&nbsp;
                   <h1 className='text-[#5BB0FF]'>ADVISOR AI</h1>
                </div>
                <div className="flex flex-col text-[#FFFFFF] font-[Lato] font-extralight text-xs mt-2 md:text-xl">
