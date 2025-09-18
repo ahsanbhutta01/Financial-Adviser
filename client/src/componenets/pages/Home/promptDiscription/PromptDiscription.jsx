@@ -17,12 +17,12 @@ const PromptDiscription = () => {
                   <img src={third} alt="" className='lg:size-100 md:h-80 md:w-120 size-60'/>
                   <div className='font-[Lato]'>
                      <h1 className=' text-xl md:text-4xl font-extrabold'>
-                        Introducing Financial AI-Prompts Generator <br className="hidden lg:block" /> from FinAdvisor AI
+                        Introducing Financial AI-Prompt Generator <br className="hidden lg:block" /> from FinAdvisor AI
                      </h1>
                      <p className='text-[15px] mt-1 md:mt-4 md:text-xl lg:leading-11'>
                         Financial-Advisor AI is an advanced tool designed to assist users in crafting  customized prompts related to <br className="hidden lg:block" /> financial topics. It leverages artificial intelligence to generate insights, suggestions, or tailored text for <br className="hidden lg:block" />financial scenarios, such as budgeting, investment planning,forecasting, and market analysis.
                         <span> <br/>
-                        This tool is ideal for financial professionals, content creators, and businesses looking to streamline <br className="hidden lg:block" />  financial communication or gain a deeper understanding and decision-making.
+                        This tool is ideal for financial professionals, content creators, and businesses looking to streamline <br className="hidden lg:block" />  financial communication or gain a deep understanding and decision-making.
                         </span>
                      </p>
                   </div>

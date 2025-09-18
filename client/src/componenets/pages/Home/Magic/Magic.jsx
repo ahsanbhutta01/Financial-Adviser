@@ -13,7 +13,7 @@ const Magic = () => {
             <div className='container mx-auto relative z-2 text-center font-[Lato] text-white'>
                <div className='relative top-30 md:top-60'>
                   <h1 className='md:text-6xl text-4xl p-4 md:p-0 font-semibold'>
-                     See the Magic. Try Now!
+                     See the Magic. Try Now
                   </h1>
                   <Link to="/trading">
                      <button className='flex items-center justify-center mt-6 md:mt-10 text-white gap-2 bg-[#2B2B2B] rounded-3xl px-9 py-2 md:px-14 md:py-2.5 text-md md:text-2xl text-center cursor-pointer font-[Lato] mx-auto'>
